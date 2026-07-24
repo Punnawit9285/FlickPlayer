@@ -41,6 +41,7 @@ import {AsyncPipe, DatePipe, DecimalPipe, NgClass} from '@angular/common';
 import {ModalEvaluationComponent} from './modal-evaluation.component';
 import {FlickemonWidgetComponent} from '../../flickemon/flickemon-widget.component';
 import {FlickemonService} from '../../flickemon/flickemon.service';
+import {PomodoroTimerComponent} from '../../shared/pomodoro-timer.component';
 
 @Component({
     selector: 'app-course',
@@ -73,6 +74,7 @@ import {FlickemonService} from '../../flickemon/flickemon.service';
         DecimalPipe,
         DatePipe,
         FlickemonWidgetComponent,
+        PomodoroTimerComponent,
     ]
 })
 export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
