@@ -10,6 +10,7 @@ import {
     AlertController,
     IonBackButton,
     IonButton,
+    IonButtons,
     IonCard,
     IonCardContent,
     IonCardHeader,
@@ -42,6 +43,8 @@ import {ModalEvaluationComponent} from './modal-evaluation.component';
 import {FlickemonWidgetComponent} from '../../flickemon/flickemon-widget.component';
 import {FlickemonService} from '../../flickemon/flickemon.service';
 import {PomodoroTimerComponent} from '../../shared/pomodoro-timer.component';
+import {ThemeService} from '../../theme.service';
+import {ThemeDropdownComponent} from '../../shared/theme-dropdown.component';
 
 @Component({
     selector: 'app-course',
@@ -73,8 +76,10 @@ import {PomodoroTimerComponent} from '../../shared/pomodoro-timer.component';
         AsyncPipe,
         DecimalPipe,
         DatePipe,
+        IonButtons,
         FlickemonWidgetComponent,
         PomodoroTimerComponent,
+        ThemeDropdownComponent,
     ]
 })
 export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
@@ -85,6 +90,7 @@ export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
     private sanitizer = inject(DomSanitizer);
     private modalCtrl = inject(ModalController);
     private flickemonService = inject(FlickemonService);
+    themeService = inject(ThemeService);
 
     @ViewChild('videoPlayer') videoPlayerElement: ElementRef;
     videoPlayer: Player;
