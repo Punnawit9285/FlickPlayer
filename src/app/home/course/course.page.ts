@@ -39,6 +39,8 @@ import type Player from 'video.js/dist/types/player';
 import {ulid} from 'ulid';
 import {AsyncPipe, DatePipe, DecimalPipe, NgClass} from '@angular/common';
 import {ModalEvaluationComponent} from './modal-evaluation.component';
+import {FlickemonWidgetComponent} from '../../flickemon/flickemon-widget.component';
+import {FlickemonService} from '../../flickemon/flickemon.service';
 
 @Component({
     selector: 'app-course',
@@ -70,6 +72,7 @@ import {ModalEvaluationComponent} from './modal-evaluation.component';
         AsyncPipe,
         DecimalPipe,
         DatePipe,
+        FlickemonWidgetComponent,
     ]
 })
 export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
@@ -79,6 +82,7 @@ export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
     private alertController = inject(AlertController);
     private sanitizer = inject(DomSanitizer);
     private modalCtrl = inject(ModalController);
+    private flickemonService = inject(FlickemonService);
 
     @ViewChild('videoPlayer') videoPlayerElement: ElementRef;
     videoPlayer: Player;
@@ -236,6 +240,14 @@ export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
                         lastLog.endTime = current.currentTime;
                         lastLog.updatedAt = currentTimestamp;
                         this.playLog[lastLogKey] = lastLog;
+                    }
+                }
+
+                // Feed Flickemon EXP from video watch time
+                if (!current.isPaused && !current.isSeeking && current.currentTime > previous.currentTime) {
+                    const secondsWatched = current.currentTime - previous.currentTime;
+                    if (secondsWatched > 0 && secondsWatched < 30) {
+                        this.flickemonService.onVideoProgress(secondsWatched);
                     }
                 }
 

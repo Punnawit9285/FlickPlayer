@@ -1,0 +1,25 @@
+{
+    "manifest_version": 3,
+    "name": "Flickémon",
+    "version": "1.0.0",
+    "description": "Gamify FlickPlayer studying with Pokémon! Earn EXP by watching lectures, battle wild Pokémon, evolve your partners.",
+    "permissions": ["storage"],
+    "content_scripts": [
+        {
+            "matches": ["*://*.docchula.com/*", "*://localhost/*"],
+            "js": ["content-script.js"],
+            "run_at": "document_idle"
+        }
+    ],
+    "icons": {
+        "48": "icons/flickemon-48.png",
+        "128": "icons/flickemon-128.png"
+    },
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "48": "icons/flickemon-48.png",
+            "128": "icons/flickemon-128.png"
+        }
+    }
+}
