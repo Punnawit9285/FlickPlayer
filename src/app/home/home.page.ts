@@ -1,4 +1,5 @@
 import {Component, inject, OnInit} from '@angular/core';
+import {ThemeDropdownComponent} from '../shared/theme-dropdown.component';
 import {Observable} from 'rxjs';
 import {CourseListResponse, Lecture, ManService} from '../man.service';
 import {Router, RouterLink} from '@angular/router';
@@ -7,7 +8,7 @@ import {ThemeService} from '../theme.service';
 import {colorByFolderName, colorByFolderNamePink} from '../../helpers';
 import {addIcons} from "ionicons";
 import {logOutOutline} from "ionicons/icons";
-import {ThemeDropdownComponent} from '../shared/theme-dropdown.component';
+
 import {
     IonButton,
     IonButtons,
@@ -34,7 +35,7 @@ import {AsyncPipe, NgStyle} from '@angular/common';
     selector: 'app-home',
     templateUrl: 'home.page.html',
     styleUrls: ['home.page.scss'],
-    imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonContent, IonGrid, IonRow, IonCol, IonCard, RouterLink, NgStyle, IonCardHeader, IonCardTitle, AsyncPipe, IonCardContent, IonItem, IonLabel, IonText, IonSpinner]
+    imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonContent, IonGrid, IonRow, IonCol, IonCard, RouterLink, NgStyle, IonCardHeader, IonCardTitle, AsyncPipe, IonCardContent, IonItem, IonLabel, IonText, IonSpinner, ThemeDropdownComponent]
 })
 export class HomePage implements OnInit {
     private manService = inject(ManService);

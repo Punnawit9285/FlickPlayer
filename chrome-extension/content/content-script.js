@@ -23,11 +23,14 @@
 
         // Inject widget into DOM
         function injectUI() {
-            // Remove top-right page header dropdown elements if present
-            document.querySelectorAll('app-theme-dropdown, .flickemon-theme-dropdown-wrapper').forEach(el => {
-                el.style.setProperty('display', 'none', 'important');
-                try { el.remove(); } catch (e) {}
-            });
+            const isHome = window.location.pathname === '/home' || window.location.pathname === '/' || window.location.pathname === '/home/';
+            
+            // Do not inject Flickémon widget on the home page
+            if (isHome) {
+                const existingWrapper = document.querySelector('.flickemon-widgets-wrapper');
+                if (existingWrapper) existingWrapper.remove();
+                return;
+            }
 
             const containerTarget = document.querySelector('ion-col[size="12"]') || document.querySelector('.scroll-area') || document.body;
             let existingWrapper = document.querySelector('.flickemon-widgets-wrapper');

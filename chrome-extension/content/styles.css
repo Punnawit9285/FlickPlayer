@@ -19,17 +19,6 @@
 }
 
 
-
-/* Forcefully hide top-right page header dropdown elements */
-app-theme-dropdown,
-.flickemon-theme-dropdown-wrapper,
-ion-header ion-buttons[slot="end"] app-theme-dropdown {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
 /* Dark Theme (via body class, container class, or system preference) */
 body.dark-theme, .dark-theme, [data-theme="dark"] {
     --flick-bg: #111827;
