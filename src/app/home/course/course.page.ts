@@ -78,6 +78,8 @@ import {ThemeDropdownComponent} from '../../shared/theme-dropdown.component';
         DatePipe,
         FlickemonWidgetComponent,
         PomodoroTimerComponent,
+        ThemeDropdownComponent,
+        IonButtons,
     ]
 })
 export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
