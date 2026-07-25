@@ -70,6 +70,16 @@ class FlickemonUI {
                     ${gameControllerSvg}
                     <span class="header-title">Flickémon</span>
                 </div>
+                <div class="header-actions">
+                    <button class="icon-btn menu-trigger-btn" title="Options">${ellipsisSvg}</button>
+                    <button class="icon-btn widget-collapse-btn" title="Toggle Collapse">${chevronUpSvg}</button>
+
+                    <!-- Options Popover Menu -->
+                    <div class="options-popover-menu" style="display: none;">
+                        <div class="popover-item game-hub-item"><span>🎮</span> Game Hub</div>
+                        <div class="popover-item settings-item"><span>⚙️</span> Settings</div>
+                    </div>
+                </div>
             </div>
             <div class="widget-body">
                 <div class="hud-columns">
@@ -111,8 +121,42 @@ class FlickemonUI {
             </div>
         `;
 
-        card.querySelector('.flickemon-header').addEventListener('click', () => {
+        const menuBtn = card.querySelector('.menu-trigger-btn');
+        const popover = card.querySelector('.options-popover-menu');
+        const collapseBtn = card.querySelector('.widget-collapse-btn');
+        const widgetBody = card.querySelector('.widget-body');
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.popoverOpen = !this.popoverOpen;
+            popover.style.display = this.popoverOpen ? 'block' : 'none';
+        });
+
+        document.addEventListener('click', () => {
+            this.popoverOpen = false;
+            if (popover) popover.style.display = 'none';
+        });
+
+        card.querySelector('.game-hub-item').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.popoverOpen = false;
+            popover.style.display = 'none';
             this.openGameHub();
+        });
+
+        card.querySelector('.settings-item').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.popoverOpen = false;
+            popover.style.display = 'none';
+            this.openSettingsModal();
+        });
+
+        let isCollapsed = false;
+        collapseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isCollapsed = !isCollapsed;
+            widgetBody.style.display = isCollapsed ? 'none' : 'block';
+            collapseBtn.innerHTML = isCollapsed ? chevronDownSvg : chevronUpSvg;
         });
     }
 
