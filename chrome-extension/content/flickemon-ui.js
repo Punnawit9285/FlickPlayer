@@ -13,6 +13,14 @@ class FlickemonUI {
         this.widgetCard = null;
         this.activeModal = null;
         this.popoverOpen = false;
+
+        document.addEventListener('click', () => {
+            this.popoverOpen = false;
+            if (this.widgetCard) {
+                const popover = this.widgetCard.querySelector('.options-popover-menu');
+                if (popover) popover.style.display = 'none';
+            }
+        });
     }
 
     renderWidget() {
@@ -132,10 +140,7 @@ class FlickemonUI {
             popover.style.display = this.popoverOpen ? 'block' : 'none';
         });
 
-        document.addEventListener('click', () => {
-            this.popoverOpen = false;
-            if (popover) popover.style.display = 'none';
-        });
+
 
         card.querySelector('.game-hub-item').addEventListener('click', (e) => {
             e.stopPropagation();
@@ -151,12 +156,19 @@ class FlickemonUI {
             this.openSettingsModal();
         });
 
-        let isCollapsed = false;
+        if (this.isCollapsed === undefined) {
+            this.isCollapsed = false;
+        }
+        
+        // Restore collapse state
+        widgetBody.style.display = this.isCollapsed ? 'none' : 'block';
+        collapseBtn.innerHTML = this.isCollapsed ? chevronDownSvg : chevronUpSvg;
+
         collapseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            isCollapsed = !isCollapsed;
-            widgetBody.style.display = isCollapsed ? 'none' : 'block';
-            collapseBtn.innerHTML = isCollapsed ? chevronDownSvg : chevronUpSvg;
+            this.isCollapsed = !this.isCollapsed;
+            widgetBody.style.display = this.isCollapsed ? 'none' : 'block';
+            collapseBtn.innerHTML = this.isCollapsed ? chevronDownSvg : chevronUpSvg;
         });
     }
 

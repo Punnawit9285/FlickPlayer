@@ -30,7 +30,13 @@
             });
 
             const containerTarget = document.querySelector('ion-col[size="12"]') || document.querySelector('.scroll-area') || document.body;
-            if (containerTarget && !containerTarget.querySelector('.flickemon-widget-card')) {
+            let existingWrapper = document.querySelector('.flickemon-widgets-wrapper');
+            
+            if (existingWrapper) {
+                if (existingWrapper.parentElement !== containerTarget) {
+                    containerTarget.appendChild(existingWrapper);
+                }
+            } else if (containerTarget) {
                 const widgetWrapper = document.createElement('div');
                 widgetWrapper.className = 'flickemon-widgets-wrapper';
                 widgetWrapper.appendChild(flickemonUI.renderWidget());
