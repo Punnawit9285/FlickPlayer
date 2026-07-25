@@ -177,7 +177,7 @@ export class FlickemonOptionsPopoverComponent {
                                             [class.resting]="wildOpponent.status === 'break'"
                                         >
                                             @if (wildOpponent.status === 'fighting') {
-                                                ⚔️ Fighting... (HP {{ wildOpponent.currentHp }}/{{ wildOpponent.maxHp }})
+                                                ⚔️ Fighting...
                                             } @else if (wildOpponent.status === 'break') {
                                                 ☕ Resting... (Pomodoro Break)
                                             } @else if (wildOpponent.status === 'captured') {
@@ -335,8 +335,8 @@ export class FlickemonOptionsPopoverComponent {
         }
 
         .widget-sprite {
-            width: 48px;
-            height: 48px;
+            width: 56px;
+            height: 56px;
             image-rendering: pixelated;
             flex-shrink: 0;
             transition: transform 0.2s ease;
@@ -417,8 +417,8 @@ export class FlickemonOptionsPopoverComponent {
         }
 
         .wild-sprite {
-            width: 44px;
-            height: 44px;
+            width: 56px;
+            height: 56px;
             image-rendering: pixelated;
             transition: transform 0.2s ease;
         }
