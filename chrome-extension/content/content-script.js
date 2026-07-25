@@ -1,7 +1,8 @@
 /**
  * Content Script Entry Point (Chrome Extension)
  * ──────────────────────────────────────────────
- * Boots engines, injects UI into Flick course page DOM, and hooks video playback.
+ * Boots game engine, injects Flickémon widget into Flick course page DOM, and hooks video playback.
+ * Automatically respects main website Pomodoro breaks if present.
  */
 
 (function () {
@@ -10,26 +11,22 @@
     console.log('[Flickémon Extension] Loading content script...');
 
     async function initExtension() {
-        // Initialize engines
-        if (window.flickemonPomodoroEngine) await window.flickemonPomodoroEngine.init();
+        // Initialize core game engine
         if (window.flickemonEngine) await window.flickemonEngine.init();
 
         // Create extension container root
         const rootContainer = document.createElement('div');
         rootContainer.className = 'flickemon-ext-root';
 
-        // Instantiate UIs
-        const pomodoroUI = new window.FlickemonPomodoroUI(window.flickemonPomodoroEngine);
+        // Instantiate Flickémon UI
         const flickemonUI = new window.FlickemonUI(window.flickemonEngine);
 
-        // Inject elements into DOM
+        // Inject widget into DOM
         function injectUI() {
-            // Inject Pomodoro & Flickemon Widgets below video / side container
             const containerTarget = document.querySelector('ion-col[size="12"]') || document.querySelector('.scroll-area') || document.body;
             if (containerTarget && !containerTarget.querySelector('.flickemon-widget-card')) {
                 const widgetWrapper = document.createElement('div');
                 widgetWrapper.className = 'flickemon-widgets-wrapper';
-                widgetWrapper.appendChild(pomodoroUI.render());
                 widgetWrapper.appendChild(flickemonUI.renderWidget());
                 containerTarget.appendChild(widgetWrapper);
             }
@@ -38,6 +35,20 @@
         injectUI();
         const observer = new MutationObserver(() => injectUI());
         observer.observe(document.body, { childList: true, subtree: true });
+
+        /** Check if main website's Pomodoro timer is currently on a break */
+        function isMainWebsitePomodoroOnBreak() {
+            // Check DOM for main site Pomodoro widget break status
+            const pomoBadge = document.querySelector('app-pomodoro-timer .phase-badge') || document.querySelector('.pomodoro-card .phase-badge');
+            if (pomoBadge && pomoBadge.textContent && pomoBadge.textContent.toLowerCase().includes('break')) {
+                return true;
+            }
+            // Check global variable if emitted by main app
+            if (window.isPomodoroBreak === true) {
+                return true;
+            }
+            return false;
+        }
 
         // Hook Video progress
         let lastVideoTime = 0;
@@ -54,12 +65,10 @@
 
                 const delta = video.currentTime - lastVideoTime;
                 if (delta > 0 && delta < 10) {
-                    // Check if pomodoro is on break — if so, pause battle damage!
-                    const isBreak = window.flickemonPomodoroEngine &&
-                        window.flickemonPomodoroEngine.currentPhase.key !== 'study' &&
-                        window.flickemonPomodoroEngine.timerState === 'running';
+                    // If main website's Pomodoro timer is on break, pause battle damage!
+                    const isOnBreak = isMainWebsitePomodoroOnBreak();
 
-                    if (!isBreak && window.flickemonEngine) {
+                    if (!isOnBreak && window.flickemonEngine) {
                         window.flickemonEngine.onVideoProgress(delta);
                     }
                 }
