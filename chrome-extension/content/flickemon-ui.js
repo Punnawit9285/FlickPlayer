@@ -207,11 +207,22 @@ class FlickemonUI {
                     `).join('')}
                 </div>
                 <div class="starters-grid"></div>
+                <div class="starter-confirm-container" style="display: none; margin-top: 1.5rem; text-align: center;">
+                    <button class="starter-confirm-btn" style="background: var(--flick-primary); color: #fff; border: none; padding: 16px 24px; border-radius: 32px; font-size: 1.2rem; font-weight: 800; width: 100%; cursor: pointer; transition: all 0.2s;">I CHOOSE YOU!</button>
+                </div>
             </div>
         `;
 
+        let currentSelectedId = null;
+
         const renderGrid = (gen) => {
             const grid = modal.body.querySelector('.starters-grid');
+            const confirmContainer = modal.body.querySelector('.starter-confirm-container');
+            const confirmBtn = modal.body.querySelector('.starter-confirm-btn');
+            
+            confirmContainer.style.display = 'none';
+            currentSelectedId = null;
+
             let starters;
             if (gen === 0) {
                 starters = options.filter(s => s.id === 25 || s.id === 133);
@@ -229,22 +240,38 @@ class FlickemonUI {
                         ${s.types.map(t => `<span class="type-pill ${t}">${t}</span>`).join('')}
                     </div>
                     <div class="starter-card-stats">
-                        <span>HP ${s.baseStats.hp}</span>
-                        <span>ATK ${s.baseStats.attack}</span>
-                        <span>DEF ${s.baseStats.defense}</span>
-                        <span>SPD ${s.baseStats.speed}</span>
+                        <div class="stat-col">
+                            <span>HP ${s.baseStats.hp}</span>
+                            <span>DEF ${s.baseStats.defense}</span>
+                        </div>
+                        <div class="stat-col">
+                            <span>ATK ${s.baseStats.attack}</span>
+                            <span>SPD ${s.baseStats.speed}</span>
+                        </div>
                     </div>
                 </div>
             `).join('');
 
             grid.querySelectorAll('.starter-card').forEach(card => {
-                card.addEventListener('click', async () => {
+                card.addEventListener('click', () => {
+                    grid.querySelectorAll('.starter-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
                     const speciesId = parseInt(card.getAttribute('data-id'), 10);
-                    if (confirm(`Do you want to choose ${card.querySelector('.starter-card-name').innerText} as your partner?`)) {
-                        await this.engine.chooseStarter(speciesId);
-                        this.closeModal(modal.overlay);
-                    }
+                    currentSelectedId = speciesId;
+                    const name = card.querySelector('.starter-card-name').innerText;
+                    confirmBtn.innerText = \`I CHOOSE YOU! (\${name.toUpperCase()})\`;
+                    confirmContainer.style.display = 'block';
                 });
+            });
+            
+            // Remove old listeners to prevent duplicates
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+            newConfirmBtn.addEventListener('click', async () => {
+                if (currentSelectedId) {
+                    await this.engine.chooseStarter(currentSelectedId);
+                    this.closeModal(modal.overlay);
+                }
             });
         };
 
