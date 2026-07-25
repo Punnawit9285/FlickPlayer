@@ -194,11 +194,15 @@ class FlickemonUI {
 
         modal.body.innerHTML = `
             <div class="starter-modal-content">
+                <div class="starter-modal-header-text">
+                    <h1 class="starter-hero-title">Choose Your Partner!</h1>
+                    <p class="starter-hero-subtitle">Select a Pokémon to begin your Flickémon journey</p>
+                </div>
                 <div class="gen-tabs">
                     ${genTabs.map(t => `
                         <button class="gen-tab-btn ${t.gen === 1 ? 'active' : ''}" data-gen="${t.gen}">
-                            <strong>${t.gen === 0 ? t.label : `${t.region} (${t.label})`}</strong><br/>
-                            <small style="font-size: 0.7em; opacity: 0.8;">${t.games}</small>
+                            <strong>${t.gen === 0 ? t.label : `${t.region} (GEN ${t.gen})`}</strong><br/>
+                            <small>${t.games}</small>
                         </button>
                     `).join('')}
                 </div>
@@ -219,20 +223,27 @@ class FlickemonUI {
             
             grid.innerHTML = starters.map(s => `
                 <div class="starter-card" data-id="${s.id}">
-                    <img src="${this.config.getSpriteUrl(s.id)}" alt="${s.name}"/>
-                    <h4>${s.name}</h4>
+                    <img class="starter-card-img" src="${this.config.getSpriteUrl(s.id)}" alt="${s.name}"/>
+                    <h4 class="starter-card-name">${s.name}</h4>
                     <div class="types-row">
                         ${s.types.map(t => `<span class="type-pill ${t}">${t}</span>`).join('')}
                     </div>
-                    <button class="choose-starter-btn">Choose ${s.name}</button>
+                    <div class="starter-card-stats">
+                        <span>HP ${s.baseStats.hp}</span>
+                        <span>ATK ${s.baseStats.attack}</span>
+                        <span>DEF ${s.baseStats.defense}</span>
+                        <span>SPD ${s.baseStats.speed}</span>
+                    </div>
                 </div>
             `).join('');
 
             grid.querySelectorAll('.starter-card').forEach(card => {
-                card.querySelector('.choose-starter-btn').addEventListener('click', async () => {
+                card.addEventListener('click', async () => {
                     const speciesId = parseInt(card.getAttribute('data-id'), 10);
-                    await this.engine.chooseStarter(speciesId);
-                    this.closeModal(modal.overlay);
+                    if (confirm(`Do you want to choose ${card.querySelector('.starter-card-name').innerText} as your partner?`)) {
+                        await this.engine.chooseStarter(speciesId);
+                        this.closeModal(modal.overlay);
+                    }
                 });
             });
         };
