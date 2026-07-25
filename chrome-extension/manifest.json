@@ -2,17 +2,15 @@
     "manifest_version": 3,
     "name": "Flickémon",
     "version": "1.0.0",
-    "description": "Gamify FlickPlayer studying with Pokémon! Battle, catch, evolve — all while watching lectures. Includes Pomodoro timer & theme switching.",
+    "description": "Gamify FlickPlayer studying with Pokémon! Battle, catch, evolve — all while watching lectures. Includes Pomodoro timer.",
     "permissions": ["storage"],
     "content_scripts": [
         {
             "matches": ["*://*.docchula.com/*", "*://localhost/*"],
             "js": [
                 "content/flickemon-config.js",
-                "content/theme-engine.js",
                 "content/pomodoro-engine.js",
                 "content/flickemon-engine.js",
-                "content/theme-ui.js",
                 "content/pomodoro-ui.js",
                 "content/flickemon-ui.js",
                 "content/content-script.js"

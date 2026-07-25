@@ -1,23 +1,25 @@
 /**
  * Flickemon Chrome Extension Stylesheet
  * ──────────────────────────────────────
- * Scoped styles for injected Flickemon widget, Pomodoro timer, Theme dropdown, and Modals.
+ * Scoped styles for injected Flickemon widget, Pomodoro timer, and Modals.
+ * Automatically adapts to Light, Dark, and Pink themes via Ionic variables & body class inheritance.
  */
 
-:root {
-    --flick-bg: #f4f5f8;
-    --flick-card-bg: #ffffff;
-    --flick-text: #1f2937;
-    --flick-text-muted: #6b7280;
-    --flick-border: #e5e7eb;
-    --flick-primary: #3b82f6;
+:root, body {
+    --flick-bg: var(--ion-background-color, #f4f5f8);
+    --flick-card-bg: var(--ion-card-background, #ffffff);
+    --flick-text: var(--ion-text-color, #1f2937);
+    --flick-text-muted: var(--ion-color-medium, #6b7280);
+    --flick-border: var(--ion-border-color, #e5e7eb);
+    --flick-primary: var(--ion-color-primary, #3b82f6);
     --flick-primary-hover: #2563eb;
-    --flick-danger: #ef4444;
-    --flick-success: #10b981;
-    --flick-warning: #f59e0b;
+    --flick-danger: var(--ion-color-danger, #ef4444);
+    --flick-success: var(--ion-color-success, #10b981);
+    --flick-warning: var(--ion-color-warning, #f59e0b);
 }
 
-.dark-theme {
+/* Dark Theme (via body class, container class, or system preference) */
+body.dark-theme, .dark-theme, [data-theme="dark"] {
     --flick-bg: #111827;
     --flick-card-bg: #1f2937;
     --flick-text: #f9fafb;
@@ -27,7 +29,20 @@
     --flick-primary-hover: #3b82f6;
 }
 
-.pink-theme {
+@media (prefers-color-scheme: dark) {
+    :root:not(.light-theme):not(.pink-theme) {
+        --flick-bg: #111827;
+        --flick-card-bg: #1f2937;
+        --flick-text: #f9fafb;
+        --flick-text-muted: #9ca3af;
+        --flick-border: #374151;
+        --flick-primary: #60a5fa;
+        --flick-primary-hover: #3b82f6;
+    }
+}
+
+/* Pink Theme (via body class or container class) */
+body.pink-theme, .pink-theme, [data-theme="pink"] {
     --flick-bg: #fff1f2;
     --flick-card-bg: #ffe4e6;
     --flick-text: #881337;
@@ -162,27 +177,7 @@
 .settings-panel { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--flick-border); text-align: left; }
 .duration-inputs { display: flex; gap: 0.75rem; margin: 0.5rem 0; }
 .duration-inputs label { font-size: 0.8rem; font-weight: 600; }
-.duration-inputs input { width: 50px; padding: 4px; border-radius: 4px; border: 1px solid var(--flick-border); }
-
-/* ────────────────────────── Theme Dropdown ────────────────────────── */
-
-.flickemon-theme-dropdown-wrapper { position: relative; display: inline-block; }
-.flickemon-theme-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
-.flickemon-theme-popover {
-    position: absolute;
-    right: 0;
-    top: 2.2rem;
-    background: var(--flick-card-bg);
-    border: 1px solid var(--flick-border);
-    border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    z-index: 9999;
-    min-width: 160px;
-    overflow: hidden;
-}
-.theme-option { padding: 8px 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--flick-text); display: flex; align-items: center; gap: 0.5rem; }
-.theme-option:hover { background: rgba(0,0,0,0.05); }
-.theme-option.active { font-weight: 800; color: var(--flick-primary); }
+.duration-inputs input { width: 50px; padding: 4px; border-radius: 4px; border: 1px solid var(--flick-border); background: var(--flick-card-bg); color: var(--flick-text); }
 
 /* ────────────────────────── Full Modals ────────────────────────── */
 

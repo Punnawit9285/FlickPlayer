@@ -11,7 +11,6 @@
 
     async function initExtension() {
         // Initialize engines
-        if (window.flickemonThemeEngine) await window.flickemonThemeEngine.init();
         if (window.flickemonPomodoroEngine) await window.flickemonPomodoroEngine.init();
         if (window.flickemonEngine) await window.flickemonEngine.init();
 
@@ -20,18 +19,11 @@
         rootContainer.className = 'flickemon-ext-root';
 
         // Instantiate UIs
-        const themeUI = new window.FlickemonThemeUI(window.flickemonThemeEngine);
         const pomodoroUI = new window.FlickemonPomodoroUI(window.flickemonPomodoroEngine);
         const flickemonUI = new window.FlickemonUI(window.flickemonEngine);
 
         // Inject elements into DOM
         function injectUI() {
-            // Inject Theme Dropdown in toolbar if available
-            const toolbar = document.querySelector('ion-toolbar ion-buttons[slot="end"]') || document.querySelector('header');
-            if (toolbar && !toolbar.querySelector('.flickemon-theme-dropdown-wrapper')) {
-                toolbar.appendChild(themeUI.render());
-            }
-
             // Inject Pomodoro & Flickemon Widgets below video / side container
             const containerTarget = document.querySelector('ion-col[size="12"]') || document.querySelector('.scroll-area') || document.body;
             if (containerTarget && !containerTarget.querySelector('.flickemon-widget-card')) {
