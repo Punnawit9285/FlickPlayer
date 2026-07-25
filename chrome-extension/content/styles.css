@@ -20,23 +20,14 @@
 
 
 
-/* Align top-right header toolbar buttons vertically with web title */
-ion-toolbar ion-buttons[slot="end"],
-ion-header ion-buttons[slot="end"] {
-    display: flex !important;
-    align-items: center !important;
-    align-self: center !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-}
-
-/* Hide top-right dropdown on home page */
-.is-home-page app-theme-dropdown,
-.is-home-page .flickemon-theme-dropdown-wrapper,
-body.is-home-page ion-buttons[slot="end"] {
+/* Forcefully hide top-right page header dropdown elements */
+app-theme-dropdown,
+.flickemon-theme-dropdown-wrapper,
+ion-header ion-buttons[slot="end"] app-theme-dropdown {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 /* Dark Theme (via body class, container class, or system preference) */
