@@ -13,7 +13,7 @@ import {AsyncPipe, NgStyle} from '@angular/common';
     selector: 'app-list',
     templateUrl: './list.page.html',
     styleUrls: ['./list.page.scss'],
-    imports: [IonHeader, IonToolbar, RouterLink, IonBackButton, IonTitle, NgStyle, IonContent, IonList, IonItem, IonLabel, AsyncPipe, IonButtons, ThemeDropdownComponent]
+    imports: [IonHeader, IonToolbar, RouterLink, IonBackButton, IonTitle, NgStyle, IonContent, IonList, IonItem, IonLabel, AsyncPipe]
 })
 export class ListPage implements OnInit {
     private route = inject(ActivatedRoute);

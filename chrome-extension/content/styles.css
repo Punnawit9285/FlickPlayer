@@ -146,9 +146,9 @@ body.pink-theme, .pink-theme, [data-theme="pink"] {
 .hp-bar-fill { height: 100%; background: #dc2626; transition: width 0.3s ease; }
 
 .exp-text { font-size: 0.7rem; color: var(--flick-text-muted); text-align: left; }
-.header-actions { display: flex; align-items: center; gap: 0.25rem; position: relative; }
+.flickemon-card .header-actions { display: flex; align-items: center; gap: 0.25rem; position: relative; }
 
-.icon-btn {
+.flickemon-card .icon-btn {
     background: transparent;
     border: none;
     cursor: pointer;
@@ -157,7 +157,7 @@ body.pink-theme, .pink-theme, [data-theme="pink"] {
     padding: 4px 8px;
     border-radius: 6px;
 }
-.icon-btn:hover { background: rgba(0,0,0,0.05); color: var(--flick-text); }
+.flickemon-card .icon-btn:hover { background: rgba(0,0,0,0.05); color: var(--flick-text); }
 
 /* Popover Options Menu */
 .options-popover-menu {

@@ -34,7 +34,7 @@ import {AsyncPipe, NgStyle} from '@angular/common';
     selector: 'app-home',
     templateUrl: 'home.page.html',
     styleUrls: ['home.page.scss'],
-    imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonContent, IonGrid, IonRow, IonCol, IonCard, RouterLink, NgStyle, IonCardHeader, IonCardTitle, AsyncPipe, IonCardContent, IonItem, IonLabel, IonText, IonSpinner, ThemeDropdownComponent]
+    imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonContent, IonGrid, IonRow, IonCol, IonCard, RouterLink, NgStyle, IonCardHeader, IonCardTitle, AsyncPipe, IonCardContent, IonItem, IonLabel, IonText, IonSpinner]
 })
 export class HomePage implements OnInit {
     private manService = inject(ManService);
