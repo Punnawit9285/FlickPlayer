@@ -47,22 +47,15 @@ export const GEN_INFO_LIST: Record<string, GenInfo> = {
                 <p class="starter-subtitle">Select a Pokémon to begin your Flickémon journey</p>
 
                 <ion-segment [value]="selectedGen" (ionChange)="onGenChange($event)" class="gen-segment" scrollable="true">
-                    <ion-segment-button value="1"><ion-label>Gen 1</ion-label></ion-segment-button>
-                    <ion-segment-button value="2"><ion-label>Gen 2</ion-label></ion-segment-button>
-                    <ion-segment-button value="3"><ion-label>Gen 3</ion-label></ion-segment-button>
-                    <ion-segment-button value="4"><ion-label>Gen 4</ion-label></ion-segment-button>
-                    <ion-segment-button value="5"><ion-label>Gen 5</ion-label></ion-segment-button>
-                    <ion-segment-button value="6"><ion-label>Gen 6</ion-label></ion-segment-button>
-                    <ion-segment-button value="7"><ion-label>Gen 7</ion-label></ion-segment-button>
-                    <ion-segment-button value="special"><ion-label>Special ⭐</ion-label></ion-segment-button>
+                    @for (genKey of getGenKeys(); track genKey) {
+                        <ion-segment-button [value]="genKey">
+                            <ion-label>
+                                <strong>{{ getGenInfo(genKey).region }} ({{ getGenInfo(genKey).label }})</strong><br/>
+                                <small style="font-size: 0.7em; opacity: 0.8;">{{ getGenInfo(genKey).games }}</small>
+                            </ion-label>
+                        </ion-segment-button>
+                    }
                 </ion-segment>
-
-                @if (currentGenInfo) {
-                    <div class="gen-info-banner">
-                        <span class="region-title">📍 {{ currentGenInfo.region }} Region</span>
-                        <span class="games-subtitle">🎮 Pokémon {{ currentGenInfo.games }}</span>
-                    </div>
-                }
 
                 <div class="starter-scroll-area">
                     <ion-grid>
@@ -297,6 +290,14 @@ export class FlickemonStarterComponent implements OnInit {
 
     getSprite(id: number): string {
         return getSpriteUrl(id);
+    }
+
+    getGenKeys(): string[] {
+        return ['1', '2', '3', '4', '5', '6', '7', 'special'];
+    }
+
+    getGenInfo(genKey: string): GenInfo {
+        return GEN_INFO_LIST[genKey];
     }
 
     onGenChange(event: any): void {

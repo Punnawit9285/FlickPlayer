@@ -182,19 +182,25 @@ class FlickemonUI {
 
         let activeTab = 1;
         const genTabs = [
-            { gen: 1, label: 'Kanto (Gen 1)' },
-            { gen: 2, label: 'Johto (Gen 2)' },
-            { gen: 3, label: 'Hoenn (Gen 3)' },
-            { gen: 4, label: 'Sinnoh (Gen 4)' },
-            { gen: 5, label: 'Unova (Gen 5)' },
-            { gen: 6, label: 'Kalos (Gen 6)' },
-            { gen: 7, label: 'Alola (Gen 7)' },
+            { gen: 1, label: 'Gen 1', region: 'Kanto', games: 'Red & Blue' },
+            { gen: 2, label: 'Gen 2', region: 'Johto', games: 'Gold, Silver, Crystal' },
+            { gen: 3, label: 'Gen 3', region: 'Hoenn', games: 'Ruby, Sapphire, Emerald' },
+            { gen: 4, label: 'Gen 4', region: 'Sinnoh', games: 'Diamond, Pearl, Platinum' },
+            { gen: 5, label: 'Gen 5', region: 'Unova', games: 'Black & White' },
+            { gen: 6, label: 'Gen 6', region: 'Kalos', games: 'X & Y' },
+            { gen: 7, label: 'Gen 7', region: 'Alola', games: 'Sun & Moon' },
+            { gen: 0, label: 'Special', region: 'Special Starters', games: 'Yellow & Let\'s Go' },
         ];
 
         modal.body.innerHTML = `
             <div class="starter-modal-content">
                 <div class="gen-tabs">
-                    ${genTabs.map(t => `<button class="gen-tab-btn ${t.gen === 1 ? 'active' : ''}" data-gen="${t.gen}">${t.label}</button>`).join('')}
+                    ${genTabs.map(t => `
+                        <button class="gen-tab-btn ${t.gen === 1 ? 'active' : ''}" data-gen="${t.gen}">
+                            <strong>${t.region} (${t.label})</strong><br/>
+                            <small style="font-size: 0.7em; opacity: 0.8;">${t.games}</small>
+                        </button>
+                    `).join('')}
                 </div>
                 <div class="starters-grid"></div>
             </div>
@@ -202,7 +208,15 @@ class FlickemonUI {
 
         const renderGrid = (gen) => {
             const grid = modal.body.querySelector('.starters-grid');
-            const starters = options.filter(s => s.generation === gen);
+            let starters;
+            if (gen === 0) {
+                starters = options.filter(s => s.id === 25 || s.id === 133);
+            } else if (gen === 1) {
+                starters = options.filter(s => s.generation === 1 && s.id !== 25 && s.id !== 133);
+            } else {
+                starters = options.filter(s => s.generation === gen);
+            }
+            
             grid.innerHTML = starters.map(s => `
                 <div class="starter-card" data-id="${s.id}">
                     <img src="${this.config.getSpriteUrl(s.id)}" alt="${s.name}"/>
@@ -218,7 +232,7 @@ class FlickemonUI {
                 card.querySelector('.choose-starter-btn').addEventListener('click', async () => {
                     const speciesId = parseInt(card.getAttribute('data-id'), 10);
                     await this.engine.chooseStarter(speciesId);
-                    this.closeModal(modal);
+                    this.closeModal(modal.overlay);
                 });
             });
         };
