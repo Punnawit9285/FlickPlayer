@@ -1,7 +1,7 @@
 /**
  * FlickemonService — Core Game Engine
  * ────────────────────────────────────
- * Manages: Active Pokémon, Party, Pokédex, EXP from video playback,
+ * Manages: Active Pokémon, Party, Pokédex, EXP from defeating wild Pokémon,
  * ongoing wild opponent battles with HP bars, auto-capture, evolution, and cloud persistence.
  */
 
@@ -11,19 +11,17 @@ import {
     PokemonSpecies,
     POKEMON_REGISTRY,
     ENCOUNTER_STAGE_WEIGHTS,
-    EXP_PER_MINUTE,
     BATTLE_WIN_EXP_BONUS,
     MAX_LEVEL,
     expForLevel,
     levelFromExp,
     getSpeciesById,
-    getSpeciesByStage,
     canEvolveAt,
     getSpriteUrl,
     STARTER_OPTIONS,
     calculateRealMaxHp,
 } from './flickemon.config';
-import {Firestore, doc, setDoc, getDoc} from '@angular/fire/firestore';
+import {Firestore, doc, setDoc, getDoc, collection, getDocs} from '@angular/fire/firestore';
 import {AuthService} from '../auth.service';
 
 // ─────────────────────────── Game State Interfaces ───────────────────────────
@@ -53,9 +51,23 @@ export interface WildOpponent {
     wildLevel: number;
     maxHp: number;
     currentHp: number;
-    status: 'fighting' | 'captured' | 'escaped';
+    status: 'fighting' | 'captured' | 'escaped' | 'break';
     fightDurationSeconds: number;
     expGained?: number;
+}
+
+/** Player summary for admin monitoring */
+export interface PlayerSummary {
+    uid: string;
+    displayName: string;
+    email: string;
+    hasStarted: boolean;
+    activePokemonName: string;
+    activePokemonLevel: number;
+    partyCount: number;
+    caughtCount: number;
+    totalMinutesWatched: number;
+    lastSyncedAt: number;
 }
 
 /** Wild encounter result */
@@ -72,6 +84,7 @@ export interface EncounterResult {
 /** Full game save state */
 export interface FlickemonGameState {
     hasStarted: boolean;
+    isHidden?: boolean;
     activeInstanceId: string | null;
     party: OwnedPokemon[];
     pokedex: PokedexEntry[];
@@ -88,20 +101,16 @@ export class FlickemonService {
     private firestore = inject(Firestore);
     private authService = inject(AuthService);
 
-    private readonly STORAGE_KEY_PREFIX = 'flickemon_';
+    private readonly STORAGE_KEY_PREFIX = 'flickemon_save_v2_';
     private currentUserId: string | null = null;
 
-    /** Game state */
     private gameState: FlickemonGameState = this.createEmptyState();
+    private gameStateSubject = new BehaviorSubject<FlickemonGameState>(this.gameState);
+    gameState$: Observable<FlickemonGameState> = this.gameStateSubject.asObservable();
 
-    /** Active Wild Opponent being battled while studying */
     private wildOpponent: WildOpponent | null = null;
     private wildOpponentSubject = new BehaviorSubject<WildOpponent | null>(null);
     wildOpponent$: Observable<WildOpponent | null> = this.wildOpponentSubject.asObservable();
-
-    /** Observables */
-    private gameStateSubject = new BehaviorSubject<FlickemonGameState>(this.gameState);
-    gameState$: Observable<FlickemonGameState> = this.gameStateSubject.asObservable();
 
     private encounterSubject = new Subject<EncounterResult>();
     encounter$: Observable<EncounterResult> = this.encounterSubject.asObservable();
@@ -112,8 +121,7 @@ export class FlickemonService {
     private respawnTimer: any = null;
 
     constructor() {
-        // Listen for auth changes
-        this.authService.user.subscribe(user => {
+        this.authService.user$.subscribe(user => {
             if (user) {
                 this.currentUserId = user.uid;
                 this.loadGameState();
@@ -125,75 +133,79 @@ export class FlickemonService {
         });
     }
 
-    // ─────────────────────────── Public API ───────────────────────────
+    private emitState(): void {
+        this.gameStateSubject.next({...this.gameState});
+    }
+
+    private async loadGameState(): Promise<void> {
+        if (!this.currentUserId) return;
+
+        try {
+            const docRef = doc(this.firestore, `users/${this.currentUserId}/flickemon/state`);
+            const snap = await getDoc(docRef);
+
+            if (snap.exists()) {
+                this.gameState = snap.data() as FlickemonGameState;
+            } else {
+                this.loadFromLocalStorage();
+            }
+        } catch {
+            this.loadFromLocalStorage();
+        }
+
+        this.emitState();
+
+        if (this.gameState.hasStarted && !this.wildOpponent) {
+            this.spawnWildOpponent();
+        }
+    }
 
     hasStarted(): boolean {
         return this.gameState.hasStarted;
     }
 
+    getGameState(): FlickemonGameState {
+        return {...this.gameState};
+    }
+
+    async toggleHide(hidden?: boolean): Promise<void> {
+        this.gameState.isHidden = hidden ?? !this.gameState.isHidden;
+        await this.saveGameState();
+    }
+
     async resetGameState(): Promise<void> {
         this.gameState = this.createEmptyState();
         this.wildOpponent = null;
+        if (this.respawnTimer) clearTimeout(this.respawnTimer);
         this.wildOpponentSubject.next(null);
-
-        if (this.currentUserId) {
-            localStorage.removeItem(this.STORAGE_KEY_PREFIX + this.currentUserId);
-        } else {
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith(this.STORAGE_KEY_PREFIX)) {
-                    localStorage.removeItem(key);
-                }
-            }
-        }
-
-        if (this.currentUserId) {
-            try {
-                const docRef = doc(this.firestore, `users/${this.currentUserId}/flickemon/state`);
-                await setDoc(docRef, this.createEmptyState());
-            } catch {
-                // Ignore
-            }
-        }
-
-        this.emitState();
+        await this.saveGameState();
     }
 
-    getStarterOptions(): PokemonSpecies[] {
-        return STARTER_OPTIONS
-            .map(id => getSpeciesById(id))
-            .filter((s): s is PokemonSpecies => !!s);
-    }
+    async chooseStarter(speciesId: number): Promise<void> {
+        const starterSpecies = getSpeciesById(speciesId);
+        if (!starterSpecies) return;
 
-    async selectStarter(speciesId: number): Promise<void> {
-        const species = getSpeciesById(speciesId);
-        if (!species) {
-            return;
-        }
-
-        const starter: OwnedPokemon = {
+        const starterInstance: OwnedPokemon = {
             instanceId: this.generateId(),
-            speciesId: species.id,
+            speciesId,
             level: 5,
             totalExp: expForLevel(5),
         };
 
         this.gameState.hasStarted = true;
-        this.gameState.party.push(starter);
-        this.gameState.activeInstanceId = starter.instanceId;
-        this.updatePokedex(species.id, true);
-
-        // Spawn first wild opponent immediately!
-        this.spawnWildOpponent();
+        this.gameState.party = [starterInstance];
+        this.gameState.activeInstanceId = starterInstance.instanceId;
+        this.updatePokedex(speciesId, true);
 
         await this.saveGameState();
+        this.spawnWildOpponent();
     }
 
     getActivePokemon(): OwnedPokemon | null {
-        if (!this.gameState.activeInstanceId) {
+        if (!this.gameState.activeInstanceId || this.gameState.party.length === 0) {
             return null;
         }
-        return this.gameState.party.find(p => p.instanceId === this.gameState.activeInstanceId) ?? null;
+        return this.gameState.party.find(p => p.instanceId === this.gameState.activeInstanceId) ?? this.gameState.party[0];
     }
 
     getSpeciesForPokemon(pokemon: OwnedPokemon): PokemonSpecies | undefined {
@@ -216,6 +228,10 @@ export class FlickemonService {
         return [...this.gameState.pokedex];
     }
 
+    getCaughtCount(): number {
+        return this.gameState.pokedex.filter(p => p.caught).length;
+    }
+
     getSprite(speciesId: number): string {
         return getSpriteUrl(speciesId);
     }
@@ -229,10 +245,70 @@ export class FlickemonService {
         return {current, needed, percent};
     }
 
+    /** Admin: Fetch summary of all players from Firestore */
+    async getAllPlayersData(): Promise<PlayerSummary[]> {
+        const players: PlayerSummary[] = [];
+        try {
+            const usersCol = collection(this.firestore, 'users');
+            const userSnap = await getDocs(usersCol);
+            for (const userDoc of userSnap.docs) {
+                const userData = userDoc.data() as any;
+                const uid = userDoc.id;
+                const displayName = userData?.displayName || userData?.name || 'Student';
+                const email = userData?.email || '';
+
+                const stateDocRef = doc(this.firestore, `users/${uid}/flickemon/state`);
+                const stateSnap = await getDoc(stateDocRef);
+                const playerState = stateSnap.exists() ? (stateSnap.data() as FlickemonGameState) : ({} as any);
+
+                let activeName = 'None';
+                let activeLevel = 0;
+                if (playerState.party && playerState.activeInstanceId) {
+                    const activePk = playerState.party.find((p: any) => p.instanceId === playerState.activeInstanceId);
+                    if (activePk) {
+                        const sp = POKEMON_REGISTRY.find(s => s.id === activePk.speciesId);
+                        if (sp) activeName = sp.name;
+                        activeLevel = activePk.level;
+                    }
+                }
+
+                const caughtCount = playerState.pokedex ? playerState.pokedex.filter((p: any) => p.caught).length : 0;
+
+                players.push({
+                    uid,
+                    displayName,
+                    email,
+                    hasStarted: !!playerState.hasStarted,
+                    activePokemonName: activeName,
+                    activePokemonLevel: activeLevel,
+                    partyCount: playerState.party ? playerState.party.length : 0,
+                    caughtCount,
+                    totalMinutesWatched: playerState.totalMinutesWatched || 0,
+                    lastSyncedAt: playerState.lastSyncedAt || 0,
+                });
+            }
+        } catch (e) {
+            console.error('Error fetching all players data', e);
+        }
+        return players;
+    }
+
+    /** Admin: Reset a specific player's game progress in Firestore */
+    async resetPlayerProgressByUid(targetUid: string): Promise<void> {
+        try {
+            const docRef = doc(this.firestore, `users/${targetUid}/flickemon/state`);
+            await setDoc(docRef, this.createEmptyState());
+            if (targetUid === this.currentUserId) {
+                await this.resetGameState();
+            }
+        } catch (e) {
+            console.error('Error resetting player progress by UID', e);
+        }
+    }
+
     /**
-     * Record video watch time and process attack damage on wild opponent + EXP.
-     * Call this from CoursePage's video timeupdate event.
-     * @param secondsWatched - Seconds of video watched since last call
+     * Record video watch time and process attack damage on wild opponent.
+     * Note: EXP is awarded ONLY after defeating/capturing the opponent!
      */
     async onVideoProgress(secondsWatched: number): Promise<void> {
         const active = this.getActivePokemon();
@@ -245,13 +321,7 @@ export class FlickemonService {
             this.spawnWildOpponent();
         }
 
-        // Add study EXP to active partner
-        const expGained = Math.round((secondsWatched / 60) * EXP_PER_MINUTE);
-        if (expGained > 0) {
-            this.addExpToActive(expGained);
-        }
-
-        // Secretly attack opponent while studying (takes ~2.5 mins / 150s of study to defeat)
+        // Secretly attack opponent while studying (defeats wild opponent over ~150s / 2.5 mins of study time)
         if (this.wildOpponent && this.wildOpponent.status === 'fighting') {
             this.wildOpponent.fightDurationSeconds += secondsWatched;
 
@@ -290,7 +360,7 @@ export class FlickemonService {
             this.wildOpponent.currentHp = Math.max(0, Math.ceil(this.wildHpAcc));
 
             if (this.wildOpponent.currentHp === 0) {
-                // Opponent Defeated & Captured!
+                // Opponent Defeated & Captured! EXP is awarded HERE upon defeating wild opponent!
                 this.wildOpponent.status = 'captured';
                 const winExp = Math.round(this.wildOpponent.wildLevel * BATTLE_WIN_EXP_BONUS);
                 this.wildOpponent.expGained = winExp;
@@ -306,7 +376,7 @@ export class FlickemonService {
                 }
                 this.updatePokedex(this.wildOpponent.wildSpecies.id, true);
 
-                // Award bonus EXP & check evolution
+                // Award victory EXP to active partner & check evolution
                 const evoResult = this.addExpToActive(winExp);
 
                 // Emit encounter celebration event
@@ -346,7 +416,7 @@ export class FlickemonService {
         const wildSpecies = this.rollWildPokemon();
         const wildLevel = this.rollWildLevel(activeLevel);
 
-        // Authentic Pokémon Max HP formula: Math.floor(((2 * baseHp) * level) / 100) + level + 10
+        // Authentic Pokémon Max HP formula
         const maxHp = calculateRealMaxHp(wildSpecies.baseStats.hp, wildLevel);
         this.wildHpAcc = maxHp;
 
@@ -363,23 +433,21 @@ export class FlickemonService {
         this.wildOpponentSubject.next({...this.wildOpponent});
     }
 
-    async syncFromPlayHistory(totalMinutesFromServer: number): Promise<void> {
-        if (!this.gameState.hasStarted) {
-            return;
-        }
-
-        const unaccountedMinutes = totalMinutesFromServer - this.gameState.totalMinutesWatched;
-        if (unaccountedMinutes > 1) {
-            const expToAdd = Math.round(unaccountedMinutes * EXP_PER_MINUTE);
-            this.addExpToActive(expToAdd);
-            this.gameState.totalMinutesWatched = totalMinutesFromServer;
-            await this.saveGameState();
-        }
-    }
-
     // ─────────────────────────── Battle & Encounters ───────────────────────────
 
     private rollWildPokemon(): PokemonSpecies {
+        const active = this.getActivePokemon();
+        const activeLevel = active ? active.level : 5;
+
+        // Legendary Pokémon Check: Strictly locked until Level 40+ AND ultra-rare 1% encounter rate!
+        if (activeLevel >= 40 && Math.random() <= 0.01) {
+            const legendaries = POKEMON_REGISTRY.filter(s => s.isLegendary);
+            if (legendaries.length > 0) {
+                return legendaries[Math.floor(Math.random() * legendaries.length)];
+            }
+        }
+
+        const nonLegendaries = POKEMON_REGISTRY.filter(s => !s.isLegendary);
         const roll = Math.random();
         let cumulative = 0;
         let selectedStage: 1 | 2 | 3 = 1;
@@ -392,9 +460,14 @@ export class FlickemonService {
             }
         }
 
-        const candidates = getSpeciesByStage(selectedStage);
+        // Stage 3 fully-evolved Pokémon are locked until Level 30+! Before Level 30, fallback to Stage 1/2
+        if (selectedStage === 3 && activeLevel < 30) {
+            selectedStage = Math.random() <= 0.85 ? 1 : 2;
+        }
+
+        const candidates = nonLegendaries.filter(s => s.evolutionStage === selectedStage);
         if (candidates.length === 0) {
-            const fallback = getSpeciesByStage(1);
+            const fallback = nonLegendaries.filter(s => s.evolutionStage === 1);
             return fallback[Math.floor(Math.random() * fallback.length)];
         }
 
@@ -451,34 +524,27 @@ export class FlickemonService {
         }
     }
 
-    // ─────────────────────────── Persistence ───────────────────────────
+    getStarterOptions(): PokemonSpecies[] {
+        return STARTER_OPTIONS.map(id => getSpeciesById(id)!).filter(Boolean);
+    }
 
-    private async loadGameState(): Promise<void> {
-        if (!this.currentUserId) {
-            return;
-        }
+    async selectStarter(speciesId: number): Promise<void> {
+        await this.chooseStarter(speciesId);
+    }
 
-        try {
-            const docRef = doc(this.firestore, `users/${this.currentUserId}/flickemon/state`);
-            const snapshot = await getDoc(docRef);
-            if (snapshot.exists()) {
-                this.gameState = snapshot.data() as FlickemonGameState;
-                this.emitState();
-                if (this.gameState.hasStarted && !this.wildOpponent) {
-                    this.spawnWildOpponent();
-                }
-                this.saveToLocalStorage();
-                return;
-            }
-        } catch {
-            // Fallback
-        }
+    private generateId(): string {
+        return 'pk_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+    }
 
-        this.loadFromLocalStorage();
-        if (this.gameState.hasStarted && !this.wildOpponent) {
-            this.spawnWildOpponent();
-        }
-        this.emitState();
+    private createEmptyState(): FlickemonGameState {
+        return {
+            hasStarted: false,
+            activeInstanceId: null,
+            party: [],
+            pokedex: [],
+            totalMinutesWatched: 0,
+            lastSyncedAt: 0,
+        };
     }
 
     private async saveGameState(): Promise<void> {
@@ -516,24 +582,5 @@ export class FlickemonService {
                 // Ignore
             }
         }
-    }
-
-    private createEmptyState(): FlickemonGameState {
-        return {
-            hasStarted: false,
-            activeInstanceId: null,
-            party: [],
-            pokedex: [],
-            totalMinutesWatched: 0,
-            lastSyncedAt: 0,
-        };
-    }
-
-    private emitState(): void {
-        this.gameStateSubject.next({...this.gameState});
-    }
-
-    private generateId(): string {
-        return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
     }
 }

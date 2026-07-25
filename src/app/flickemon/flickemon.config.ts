@@ -64,9 +64,9 @@ export interface EncounterWeight {
 }
 
 export const ENCOUNTER_STAGE_WEIGHTS: EncounterWeight[] = [
-    {stage: 1, weight: 0.85},
-    {stage: 2, weight: 0.12},
-    {stage: 3, weight: 0.03},
+    {stage: 1, weight: 0.88},
+    {stage: 2, weight: 0.11},
+    {stage: 3, weight: 0.01},
 ];
 
 // ─────────────────────────── Pokémon Types ───────────────────────────
@@ -95,6 +95,7 @@ export interface PokemonSpecies {
     baseStats: PokemonBaseStats;
     evolutionStage: 1 | 2 | 3;
     generation?: number;
+    isLegendary?: boolean;
 }
 
 /**
@@ -245,14 +246,14 @@ export const POKEMON_REGISTRY: PokemonSpecies[] = [
     {id: 141, name: 'Kabutops', types: ['rock', 'water'], baseStats: {hp: 60, attack: 115, defense: 105, speed: 80}, evolutionStage: 2, generation: 1},
     {id: 142, name: 'Aerodactyl', types: ['rock', 'flying'], baseStats: {hp: 80, attack: 105, defense: 65, speed: 130}, evolutionStage: 1, generation: 1},
     {id: 143, name: 'Snorlax', types: ['normal'], baseStats: {hp: 160, attack: 110, defense: 65, speed: 30}, evolutionStage: 1, generation: 1},
-    {id: 144, name: 'Articuno', types: ['ice', 'flying'], baseStats: {hp: 90, attack: 85, defense: 100, speed: 85}, evolutionStage: 1, generation: 1},
-    {id: 145, name: 'Zapdos', types: ['electric', 'flying'], baseStats: {hp: 90, attack: 90, defense: 85, speed: 100}, evolutionStage: 1, generation: 1},
-    {id: 146, name: 'Moltres', types: ['fire', 'flying'], baseStats: {hp: 90, attack: 100, defense: 90, speed: 90}, evolutionStage: 1, generation: 1},
+    {id: 144, name: 'Articuno', types: ['ice', 'flying'], baseStats: {hp: 90, attack: 85, defense: 100, speed: 85}, evolutionStage: 1, generation: 1, isLegendary: true},
+    {id: 145, name: 'Zapdos', types: ['electric', 'flying'], baseStats: {hp: 90, attack: 90, defense: 85, speed: 100}, evolutionStage: 1, generation: 1, isLegendary: true},
+    {id: 146, name: 'Moltres', types: ['fire', 'flying'], baseStats: {hp: 90, attack: 100, defense: 90, speed: 90}, evolutionStage: 1, generation: 1, isLegendary: true},
     {id: 147, name: 'Dratini', types: ['dragon'], baseStats: {hp: 41, attack: 64, defense: 45, speed: 50}, evolutionStage: 1, generation: 1},
     {id: 148, name: 'Dragonair', types: ['dragon'], baseStats: {hp: 61, attack: 84, defense: 65, speed: 70}, evolutionStage: 2, generation: 1},
     {id: 149, name: 'Dragonite', types: ['dragon', 'flying'], baseStats: {hp: 91, attack: 134, defense: 95, speed: 80}, evolutionStage: 3, generation: 1},
-    {id: 150, name: 'Mewtwo', types: ['psychic'], baseStats: {hp: 106, attack: 110, defense: 90, speed: 130}, evolutionStage: 1, generation: 1},
-    {id: 151, name: 'Mew', types: ['psychic'], baseStats: {hp: 100, attack: 100, defense: 100, speed: 100}, evolutionStage: 1, generation: 1},
+    {id: 150, name: 'Mewtwo', types: ['psychic'], baseStats: {hp: 106, attack: 110, defense: 90, speed: 130}, evolutionStage: 1, generation: 1, isLegendary: true},
+    {id: 151, name: 'Mew', types: ['psychic'], baseStats: {hp: 100, attack: 100, defense: 100, speed: 100}, evolutionStage: 1, generation: 1, isLegendary: true},
 
     // ── GEN 2 STARTERS & EVOLUTIONS ──
     {id: 152, name: 'Chikorita', types: ['grass'], baseStats: {hp: 45, attack: 49, defense: 65, speed: 45}, evolutionStage: 1, generation: 2},

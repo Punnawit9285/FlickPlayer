@@ -1,96 +1,196 @@
 /**
  * FlickemonWidgetComponent — Compact HUD on course page.
  * Displays active partner on the left and ongoing wild opponent battle with real-time HP bar on the right.
- * Opens the full Game Hub modal on click.
+ * Features PopoverController for 3-dots options dropdown (Game Hub, Settings, Hide Flickémon) with overflow clipping.
  */
 
-import {Component, inject, OnDestroy, OnInit} from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import {
     IonCard,
     IonCardContent,
+    IonCardHeader,
+    IonCardTitle,
     IonIcon,
+    IonItem,
+    IonLabel,
+    IonList,
     IonProgressBar,
     ModalController,
+    PopoverController,
 } from '@ionic/angular/standalone';
-import {FlickemonService, OwnedPokemon, EncounterResult, WildOpponent} from './flickemon.service';
-import {PokemonSpecies} from './flickemon.config';
-import {FlickemonModalComponent} from './flickemon-modal.component';
-import {FlickemonStarterComponent} from './flickemon-starter.component';
-import {AsyncPipe} from '@angular/common';
-import {addIcons} from 'ionicons';
-import {gameController, sparkles, close, trophy} from 'ionicons/icons';
-import {Subscription} from 'rxjs';
+import { FlickemonService, OwnedPokemon, WildOpponent } from './flickemon.service';
+import { PokemonSpecies, getSpriteUrl } from './flickemon.config';
+import { FlickemonModalComponent } from './flickemon-modal.component';
+import { FlickemonStarterComponent } from './flickemon-starter.component';
+import { FlickemonSettingsModalComponent } from './flickemon-settings-modal.component';
+import { addIcons } from 'ionicons';
+import {
+    gameController,
+    sparkles,
+    close,
+    trophy,
+    ellipsisVertical,
+    chevronDown,
+    chevronUp,
+    cog,
+    eyeOff,
+    eye,
+} from 'ionicons/icons';
+import { Subscription } from 'rxjs';
+
+/** Popover component for 3-dots options menu */
+@Component({
+    selector: 'app-flickemon-options-popover',
+    template: `
+        <ion-list lines="none" class="flickemon-options-list">
+            <ion-item button (click)="selectOption('gameHub')">
+                <ion-icon name="game-controller" slot="start" color="primary"></ion-icon>
+                <ion-label>Game Hub</ion-label>
+            </ion-item>
+            <ion-item button (click)="selectOption('settings')">
+                <ion-icon name="cog" slot="start" color="medium"></ion-icon>
+                <ion-label>Settings</ion-label>
+            </ion-item>
+        </ion-list>
+    `,
+    styles: [`
+        .flickemon-options-list {
+            padding: 0.25rem 0;
+            margin: 0;
+            background: var(--ion-card-background, var(--ion-background-color, #fff));
+        }
+
+        ion-item {
+            --padding-start: 0.85rem;
+            --padding-end: 0.85rem;
+            --min-height: 44px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--ion-text-color);
+        }
+    `],
+    imports: [IonList, IonItem, IonIcon, IonLabel],
+})
+export class FlickemonOptionsPopoverComponent {
+    private popoverCtrl = inject(PopoverController);
+
+    constructor() {
+        addIcons({ gameController, cog, eyeOff });
+    }
+
+    selectOption(action: string): void {
+        this.popoverCtrl.dismiss({ action });
+    }
+}
 
 @Component({
     selector: 'app-flickemon-widget',
     template: `
         @if (!flickemonService.hasStarted()) {
-            <!-- Not started: Show start button -->
-            <ion-card class="widget-card start-card" button (click)="openStarterModal()">
-                <ion-card-content class="widget-start">
-                    <ion-icon name="game-controller" class="start-icon"></ion-icon>
-                    <span class="start-text">Start Flickémon!</span>
-                </ion-card-content>
+            <!-- Not started: Show start card matching Pomodoro timer shape -->
+            <ion-card class="flickemon-card start-card">
+                <ion-card-header class="flickemon-header" (click)="openStarterModal()" button>
+                    <ion-card-title class="flickemon-title">
+                        <div class="title-left">
+                            <ion-icon name="game-controller" class="title-icon"></ion-icon>
+                            <span>Flickémon</span>
+                        </div>
+                        <span class="start-badge">Start Game</span>
+                    </ion-card-title>
+                </ion-card-header>
             </ion-card>
         } @else if (activePokemon && activeSpecies) {
-            <!-- Active game: Show Pokémon HUD -->
-            <ion-card class="widget-card" button (click)="openGameHub()">
-                <ion-card-content class="widget-content">
-                    <!-- Active Partner Section (Left) -->
-                    <div class="active-partner-box">
-                        <img
-                            [src]="flickemonService.getSprite(activeSpecies.id)"
-                            [alt]="activeSpecies.name"
-                            class="widget-sprite"
-                            [class.bounce]="justGainedExp"
-                        />
-                        <div class="widget-info">
-                            <div class="widget-name-row">
-                                <span class="widget-name">{{ activeSpecies.name }}</span>
-                                <span class="widget-level">Lv.{{ activePokemon.level }}</span>
-                            </div>
-                            <ion-progress-bar
-                                [value]="expProgress.percent / 100"
-                                color="primary"
-                                class="widget-exp-bar"
-                            ></ion-progress-bar>
-                            <span class="widget-exp-text">EXP {{ expProgress.current }}/{{ expProgress.needed }}</span>
+            <!-- Active game: Card matching Pomodoro Timer size, shape & header -->
+            <ion-card class="flickemon-card">
+                <!-- Card Header with Title, 3-dots Menu & Collapse Toggle -->
+                <ion-card-header class="flickemon-header" (click)="toggleCollapse()" button>
+                    <ion-card-title class="flickemon-title">
+                        <div class="title-left">
+                            <ion-icon name="game-controller" class="title-icon"></ion-icon>
+                            <span>Flickémon</span>
                         </div>
-                    </div>
+                        <div class="header-actions" (click)="$event.stopPropagation()">
+                            <!-- 3-Dots Options Trigger -->
+                            <button class="menu-trigger-btn" (click)="openOptionsPopover($event)" title="Options">
+                                <ion-icon name="ellipsis-vertical"></ion-icon>
+                            </button>
+                            <!-- Collapse Toggle -->
+                            <ion-icon
+                                [name]="isCollapsed ? 'chevron-down' : 'chevron-up'"
+                                class="collapse-icon"
+                                (click)="toggleCollapse($event)"
+                            ></ion-icon>
+                        </div>
+                    </ion-card-title>
+                </ion-card-header>
 
-                    <!-- Always Displayed Wild Opponent Section (Right) -->
-                    @if (wildOpponent) {
-                        <div class="encounter-inline-box">
-                            <div class="vs-badge">VS</div>
-                            <img
-                                [src]="flickemonService.getSprite(wildOpponent.wildSpecies.id)"
-                                [alt]="wildOpponent.wildSpecies.name"
-                                class="wild-sprite"
-                                [class.hit]="justGainedExp"
-                            />
-                            <div class="wild-info">
-                                <div class="wild-name-row">
-                                    <span class="wild-name">{{ wildOpponent.wildSpecies.name }}</span>
-                                    <span class="wild-level">Lv.{{ wildOpponent.wildLevel }}</span>
-                                </div>
-                                <ion-progress-bar
-                                    [value]="wildOpponent.currentHp / wildOpponent.maxHp"
-                                    color="danger"
-                                    class="wild-hp-bar"
-                                ></ion-progress-bar>
-                                <div class="result-badge" [class.captured]="wildOpponent.status === 'captured'" [class.escaped]="wildOpponent.status === 'escaped'">
-                                    @if (wildOpponent.status === 'fighting') {
-                                        ⚔️ Fighting... (HP {{ wildOpponent.currentHp }}/{{ wildOpponent.maxHp }})
-                                    } @else if (wildOpponent.status === 'captured') {
-                                        🏆 Captured! (+{{ wildOpponent.expGained }} EXP)
-                                    } @else {
-                                        💨 Escaped! Level too high (+{{ wildOpponent.expGained }} EXP)
-                                    }
+                @if (!isCollapsed) {
+                    <ion-card-content class="flickemon-content" (click)="openGameHub()">
+                        <div class="hud-flex-row">
+                            <!-- Active Partner Section (Left) -->
+                            <div class="active-partner-box">
+                                <img
+                                    [src]="flickemonService.getSprite(activeSpecies.id)"
+                                    [alt]="activeSpecies.name"
+                                    class="widget-sprite"
+                                    [class.bounce]="justGainedExp"
+                                />
+                                <div class="widget-info">
+                                    <div class="widget-name-row">
+                                        <span class="widget-name">{{ activeSpecies.name }}</span>
+                                        <span class="widget-level">Lv.{{ activePokemon.level }}</span>
+                                    </div>
+                                    <ion-progress-bar
+                                        [value]="expProgress.percent / 100"
+                                        color="primary"
+                                        class="widget-exp-bar"
+                                    ></ion-progress-bar>
+                                    <span class="widget-exp-text">EXP {{ expProgress.current }}/{{ expProgress.needed }}</span>
                                 </div>
                             </div>
+
+                            <!-- Always Displayed Wild Opponent Section (Right) -->
+                            @if (wildOpponent) {
+                                <div class="encounter-inline-box">
+                                    <div class="vs-badge">VS</div>
+                                    <img
+                                        [src]="flickemonService.getSprite(wildOpponent.wildSpecies.id)"
+                                        [alt]="wildOpponent.wildSpecies.name"
+                                        class="wild-sprite"
+                                        [class.hit]="justGainedExp"
+                                    />
+                                    <div class="wild-info">
+                                        <div class="wild-name-row">
+                                            <span class="wild-name">{{ wildOpponent.wildSpecies.name }}</span>
+                                            <span class="wild-level">Lv.{{ wildOpponent.wildLevel }}</span>
+                                        </div>
+                                        <ion-progress-bar
+                                            [value]="wildOpponent.currentHp / wildOpponent.maxHp"
+                                            color="danger"
+                                            class="wild-hp-bar"
+                                        ></ion-progress-bar>
+                                        <div
+                                            class="result-badge"
+                                            [class.captured]="wildOpponent.status === 'captured'"
+                                            [class.escaped]="wildOpponent.status === 'escaped'"
+                                            [class.resting]="wildOpponent.status === 'break'"
+                                        >
+                                            @if (wildOpponent.status === 'fighting') {
+                                                ⚔️ Fighting... (HP {{ wildOpponent.currentHp }}/{{ wildOpponent.maxHp }})
+                                            } @else if (wildOpponent.status === 'break') {
+                                                ☕ Resting... (Pomodoro Break)
+                                            } @else if (wildOpponent.status === 'captured') {
+                                                🏆 Captured! (+{{ wildOpponent.expGained }} EXP)
+                                            } @else {
+                                                💨 Escaped! Level too high (+{{ wildOpponent.expGained }} EXP)
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
                         </div>
-                    }
-                </ion-card-content>
+                    </ion-card-content>
+                }
             </ion-card>
 
             <!-- Evolution Animation Overlay -->
@@ -115,40 +215,113 @@ import {Subscription} from 'rxjs';
             display: block;
         }
 
-        .widget-card {
-            margin: 0.5rem 0;
-            border-radius: 0.75rem;
-            overflow: hidden;
-        }
-
-        .start-card {
+        .unhide-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            margin-top: 0.75rem;
+            background: var(--ion-color-light, rgba(0, 0, 0, 0.05));
+            border: 1px dashed var(--ion-color-medium);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--ion-color-medium);
             cursor: pointer;
         }
 
-        .widget-start {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-        }
-
-        .start-icon {
-            font-size: 1.5rem;
+        .unhide-icon {
+            font-size: 1.1rem;
             color: var(--ion-color-primary);
         }
 
-        .start-text {
+        .flickemon-card {
+            margin: 0.75rem 0 0 0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            position: relative;
+            box-shadow: var(--flick-welcome-card-shadow, 0 4px 16px rgba(0, 0, 0, 0.08));
+        }
+
+        .flickemon-header {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+        }
+
+        .flickemon-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .title-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .title-icon {
+            font-size: 1.2rem;
+            color: var(--ion-color-primary);
+        }
+
+        .start-badge {
+            font-size: 0.8rem;
             font-weight: 700;
+            color: var(--ion-color-primary);
+            background: rgba(56, 128, 255, 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.35rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            position: relative;
+        }
+
+        .menu-trigger-btn {
+            background: transparent;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            color: var(--ion-color-medium, #888);
+            font-size: 1.1rem;
+            padding: 0.2rem;
+            border-radius: 0.35rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .menu-trigger-btn:hover {
+            background: var(--ion-color-light, rgba(0, 0, 0, 0.05));
             color: var(--ion-text-color);
         }
 
-        .widget-content {
+        .collapse-icon {
+            font-size: 1.2rem;
+            color: var(--ion-color-medium);
+            cursor: pointer;
+        }
+
+        .flickemon-content {
+            padding: 0 1rem 1rem 1rem;
+            cursor: pointer;
+        }
+
+        .hud-flex-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
-            padding: 0.5rem 0.75rem;
             flex-wrap: wrap;
         }
 
@@ -305,6 +478,11 @@ import {Subscription} from 'rxjs';
             font-weight: 700;
         }
 
+        .result-badge.resting {
+            color: var(--ion-color-tertiary, #7044ff);
+            font-weight: 700;
+        }
+
         /* Evolution Overlay */
         .evolution-overlay {
             position: fixed;
@@ -380,6 +558,8 @@ import {Subscription} from 'rxjs';
     `],
     imports: [
         IonCard,
+        IonCardHeader,
+        IonCardTitle,
         IonCardContent,
         IonIcon,
         IonProgressBar,
@@ -388,14 +568,17 @@ import {Subscription} from 'rxjs';
 export class FlickemonWidgetComponent implements OnInit, OnDestroy {
     flickemonService = inject(FlickemonService);
     private modalCtrl = inject(ModalController);
+    private popoverCtrl = inject(PopoverController);
 
     activePokemon: OwnedPokemon | null = null;
     activeSpecies: PokemonSpecies | null = null;
-    expProgress = {current: 0, needed: 0, percent: 0};
+    expProgress = { current: 0, needed: 0, percent: 0 };
     justGainedExp = false;
+    isCollapsed = false;
+    isWidgetHidden = false;
 
     wildOpponent: WildOpponent | null = null;
-    evolutionAnim: {from: PokemonSpecies; to: PokemonSpecies} | null = null;
+    evolutionAnim: { from: PokemonSpecies; to: PokemonSpecies } | null = null;
 
     private stateSub: Subscription | null = null;
     private wildSub: Subscription | null = null;
@@ -403,11 +586,23 @@ export class FlickemonWidgetComponent implements OnInit, OnDestroy {
     private evolutionTimer: any = null;
 
     constructor() {
-        addIcons({gameController, sparkles, close, trophy});
+        addIcons({
+            gameController,
+            sparkles,
+            close,
+            trophy,
+            ellipsisVertical,
+            chevronDown,
+            chevronUp,
+            cog,
+            eyeOff,
+            eye,
+        });
     }
 
     ngOnInit(): void {
-        this.stateSub = this.flickemonService.gameState$.subscribe(() => {
+        this.stateSub = this.flickemonService.gameState$.subscribe(state => {
+            this.isWidgetHidden = state.isHidden ?? false;
             this.refreshState();
         });
 
@@ -439,7 +634,39 @@ export class FlickemonWidgetComponent implements OnInit, OnDestroy {
         }
     }
 
-    private showEvolution(evo: {from: PokemonSpecies; to: PokemonSpecies}): void {
+    toggleCollapse(event?: Event): void {
+        if (event) {
+            event.stopPropagation();
+        }
+        this.isCollapsed = !this.isCollapsed;
+    }
+
+    unhideWidget(): void {
+        this.flickemonService.toggleHide(false);
+    }
+
+    async openOptionsPopover(event: Event): Promise<void> {
+        event.stopPropagation();
+        const popover = await this.popoverCtrl.create({
+            component: FlickemonOptionsPopoverComponent,
+            event,
+            side: 'start',
+            alignment: 'start',
+            translucent: true,
+            showBackdrop: false,
+        });
+        await popover.present();
+        const { data } = await popover.onDidDismiss();
+        if (data?.action === 'gameHub') {
+            await this.openGameHub();
+        } else if (data?.action === 'settings') {
+            await this.openSettingsModal();
+        } else if (data?.action === 'hide') {
+            await this.flickemonService.toggleHide(true);
+        }
+    }
+
+    private showEvolution(evo: { from: PokemonSpecies; to: PokemonSpecies }): void {
         this.evolutionAnim = evo;
         if (this.evolutionTimer) clearTimeout(this.evolutionTimer);
         this.evolutionTimer = setTimeout(() => {
@@ -460,6 +687,16 @@ export class FlickemonWidgetComponent implements OnInit, OnDestroy {
     async openGameHub(): Promise<void> {
         const modal = await this.modalCtrl.create({
             component: FlickemonModalComponent,
+            cssClass: 'flickemon-modal',
+        });
+        await modal.present();
+        await modal.onDidDismiss();
+        this.refreshState();
+    }
+
+    async openSettingsModal(): Promise<void> {
+        const modal = await this.modalCtrl.create({
+            component: FlickemonSettingsModalComponent,
             cssClass: 'flickemon-modal',
         });
         await modal.present();
