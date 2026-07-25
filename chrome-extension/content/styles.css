@@ -299,3 +299,277 @@ body.pink-theme, .pink-theme, [data-theme="pink"] {
 .evo-sprites { display: flex; align-items: center; justify-content: center; gap: 1.5rem; }
 .evo-sprites img { width: 120px; height: 120px; object-fit: contain; }
 .evo-sprites .arrow { font-size: 2rem; }
+
+/* ====================================================
+   Flickemon Vanilla JS Modals (Chrome Extension)
+   ==================================================== */
+
+.flickemon-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.flickemon-modal-container {
+    width: 90%;
+    max-width: 500px;
+    height: 80vh;
+    max-height: 600px;
+    background: var(--flick-bg, #fff0f5);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+/* Modal Header */
+.flickemon-modal-header {
+    background: var(--flick-primary, #f48fb1);
+    color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 2;
+}
+.dark-theme .flickemon-modal-header {
+    color: var(--flick-text);
+}
+
+.flickemon-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1;
+    color: #4a148c; /* Dark text for contrast on pink */
+}
+
+.dark-theme .flickemon-modal-title {
+    color: var(--flick-text);
+}
+
+.flickemon-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: #4a148c;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+}
+.dark-theme .flickemon-modal-close { color: var(--flick-text); }
+
+/* Tabs */
+.flickemon-tabs {
+    display: flex;
+    margin-top: 16px;
+    gap: 8px;
+    justify-content: space-around;
+}
+
+.flickemon-tab-btn {
+    background: none;
+    border: none;
+    color: rgba(74, 20, 140, 0.6);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+.dark-theme .flickemon-tab-btn { color: var(--flick-text-muted); }
+
+.flickemon-tab-btn:hover {
+    color: rgba(74, 20, 140, 0.9);
+}
+.dark-theme .flickemon-tab-btn:hover { color: var(--flick-text); }
+
+.flickemon-tab-btn.active {
+    color: #e91e63;
+    border-bottom: 2px solid #e91e63;
+}
+.dark-theme .flickemon-tab-btn.active {
+    color: var(--flick-primary);
+    border-bottom: 2px solid var(--flick-primary);
+}
+
+/* Modal Content Area */
+.flickemon-modal-content {
+    flex: 1;
+    overflow-y: auto;
+    background: #fff5f8; /* very light pink */
+    position: relative;
+    padding: 16px;
+}
+.dark-theme .flickemon-modal-content { background: var(--flick-bg); }
+
+/* Type Badges */
+.type-badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.75rem;
+    color: #fff;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-block;
+    margin: 0 4px;
+}
+.type-badge[data-type="fire"] { background: #F08030; }
+.type-badge[data-type="water"] { background: #6890F0; }
+.type-badge[data-type="grass"] { background: #78C850; }
+.type-badge[data-type="electric"] { background: #F8D030; color: #333; }
+.type-badge[data-type="poison"] { background: #A040A0; }
+.type-badge[data-type="flying"] { background: #A890F0; }
+.type-badge[data-type="bug"] { background: #A8B820; }
+.type-badge[data-type="normal"] { background: #A8A878; }
+.type-badge[data-type="psychic"] { background: #F85888; }
+.type-badge[data-type="fighting"] { background: #C03028; }
+.type-badge[data-type="rock"] { background: #B8A038; }
+.type-badge[data-type="ground"] { background: #E0C068; color: #333; }
+.type-badge[data-type="ghost"] { background: #705898; }
+.type-badge[data-type="dragon"] { background: #7038F8; }
+.type-badge[data-type="ice"] { background: #98D8D8; color: #333; }
+.type-badge[data-type="dark"] { background: #705848; }
+.type-badge[data-type="steel"] { background: #B8B8D0; color: #333; }
+.type-badge[data-type="fairy"] { background: #EE99AC; }
+
+/* Settings / Stats rows */
+.flickemon-list-card {
+    background: #fce4ec; /* slightly darker pink */
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.dark-theme .flickemon-list-card { background: var(--flick-card-bg); }
+
+.flickemon-list-item {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    color: #4a148c;
+}
+.dark-theme .flickemon-list-item { border-bottom: 1px solid var(--flick-border); color: var(--flick-text); }
+.flickemon-list-item:last-child { border-bottom: none; }
+
+.flickemon-list-item-title {
+    font-size: 0.9rem;
+    color: #4a148c;
+}
+.dark-theme .flickemon-list-item-title { color: var(--flick-text); }
+
+.flickemon-list-item-sub {
+    font-size: 0.85rem;
+    color: #c2185b;
+}
+.dark-theme .flickemon-list-item-sub { color: var(--flick-text-muted); }
+
+/* Reset Button */
+.flickemon-danger-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 2px solid #e91e63;
+    color: #e91e63;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+.flickemon-danger-btn:hover {
+    background: rgba(233, 30, 99, 0.1);
+}
+
+/* Party List */
+.flickemon-party-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: #e91e63; /* Pink background for active */
+    color: white;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.flickemon-party-row.inactive {
+    background: #fce4ec;
+    color: #4a148c;
+}
+.dark-theme .flickemon-party-row.inactive { background: var(--flick-card-bg); color: var(--flick-text); }
+
+.party-sprite { width: 40px; height: 40px; image-rendering: pixelated; margin-right: 12px; }
+.party-info { flex: 1; display: flex; flex-direction: column; }
+.party-name { font-size: 0.9rem; font-weight: 600; }
+.party-level { font-size: 0.8rem; opacity: 0.9; }
+.party-star { color: #ffd700; font-size: 1.2rem; }
+
+/* Pokédex Grid */
+.flickemon-pokedex-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    text-align: center;
+}
+@media (max-width: 400px) {
+    .flickemon-pokedex-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.pokedex-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+}
+.pokedex-sprite { width: 48px; height: 48px; image-rendering: pixelated; }
+.pokedex-unknown {
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: #ccc; font-weight: bold;
+}
+.pokedex-num { font-size: 0.7rem; color: #999; margin-top: 4px; }
+.pokedex-name { font-size: 0.7rem; font-weight: 600; color: #4a148c; }
+.dark-theme .pokedex-name { color: var(--flick-text); }
+
+/* My Partner Stats Grid */
+.partner-section { text-align: center; padding: 16px 0; color: #4a148c; }
+.dark-theme .partner-section { color: var(--flick-text); }
+.partner-big-sprite { width: 128px; height: 128px; image-rendering: pixelated; }
+.partner-big-name { font-size: 1.5rem; font-weight: 800; margin: 8px 0 4px; }
+.partner-types { margin-bottom: 8px; }
+.partner-big-level { font-size: 1.1rem; font-weight: 600; color: #c2185b; margin-bottom: 8px; }
+.dark-theme .partner-big-level { color: var(--flick-text-muted); }
+
+.partner-exp-wrap { max-width: 300px; margin: 8px auto; }
+.partner-exp-bar-bg { height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; overflow: hidden; }
+.partner-exp-bar-fill { height: 100%; background: #e91e63; transition: width 0.3s; }
+.partner-exp-text { font-size: 0.8rem; color: #c2185b; margin-top: 4px; }
+.dark-theme .partner-exp-text { color: var(--flick-text-muted); }
+
+.partner-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 280px;
+    margin: 16px auto;
+}
+.stat-box { display: flex; justify-content: space-between; padding: 8px 12px; background: #fff; border-radius: 8px; }
+.dark-theme .stat-box { background: var(--flick-card-bg); }
+.stat-box-label { font-size: 0.8rem; color: #c2185b; }
+.dark-theme .stat-box-label { color: var(--flick-text-muted); }
+.stat-box-value { font-size: 0.85rem; font-weight: 700; }

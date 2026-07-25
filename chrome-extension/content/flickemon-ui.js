@@ -237,82 +237,97 @@ class FlickemonUI {
     // ────────────────────────── Game Hub Modal ──────────────────────────
 
     openGameHub() {
-        const modal = this.createModalOverlay('Flickémon Game Hub 🎮');
+        const modal = this.createModalOverlay('Flickémon');
         const active = this.engine.getActivePokemon();
         const activeSpecies = active ? this.engine.getSpeciesForPokemon(active) : null;
         const party = this.engine.getParty();
         const pokedex = this.engine.getPokedex();
 
-        modal.body.innerHTML = `
-            <div class="hub-tabs-row">
-                <button class="hub-tab-btn active" data-tab="partner">My Partner</button>
-                <button class="hub-tab-btn" data-tab="party">Party (${party.length})</button>
-                <button class="hub-tab-btn" data-tab="pokedex">Pokédex (${this.engine.getCaughtCount()}/${this.config.POKEMON_REGISTRY.length})</button>
-                <button class="hub-tab-btn" data-tab="stats">Stats</button>
-            </div>
-            <div class="hub-tab-content"></div>
+        // Inject Tab Bar outside of the modal.body to keep it sticky at the top
+        const tabRow = document.createElement('div');
+        tabRow.className = 'flickemon-tabs';
+        tabRow.innerHTML = `
+            <button class="flickemon-tab-btn active" data-tab="partner">My Partner</button>
+            <button class="flickemon-tab-btn" data-tab="party">Party</button>
+            <button class="flickemon-tab-btn" data-tab="pokedex">Pokédex</button>
+            <button class="flickemon-tab-btn" data-tab="stats">Stats</button>
         `;
+        // Insert it right after the header
+        modal.body.parentElement.insertBefore(tabRow, modal.body);
 
-        const content = modal.body.querySelector('.hub-tab-content');
+        const content = modal.body;
 
         const renderTab = (tab) => {
-            if (tab === 'partner' && active && activeSpecies) {
-                const expProg = this.engine.getExpProgress(active);
-                content.innerHTML = `
-                    <div class="partner-tab-view">
-                        <img src="${this.config.getSpriteUrl(activeSpecies.id)}" alt="${activeSpecies.name}" class="big-partner-sprite"/>
-                        <h2>${activeSpecies.name}</h2>
-                        <div class="types-row">${activeSpecies.types.map(t => `<span class="type-pill ${t}">${t}</span>`).join('')}</div>
-                        <p class="lvl-badge">Level ${active.level}</p>
-                        <div class="stat-bars">
-                            <div class="stat-row"><span>HP</span> <strong>${this.config.calculateRealMaxHp(activeSpecies.baseStats.hp, active.level)}</strong></div>
-                            <div class="stat-row"><span>Attack</span> <strong>${activeSpecies.baseStats.attack}</strong></div>
-                            <div class="stat-row"><span>Defense</span> <strong>${activeSpecies.baseStats.defense}</strong></div>
-                            <div class="stat-row"><span>Speed</span> <strong>${activeSpecies.baseStats.speed}</strong></div>
+            if (tab === 'partner') {
+                if (active && activeSpecies) {
+                    const expProg = this.engine.getExpProgress(active);
+                    content.innerHTML = `
+                        <div class="partner-section">
+                            <img src="${this.config.getSpriteUrl(activeSpecies.id)}" alt="${activeSpecies.name}" class="partner-big-sprite"/>
+                            <h2 class="partner-big-name">${activeSpecies.name}</h2>
+                            <div class="partner-types">${activeSpecies.types.map(t => `<span class="type-badge" data-type="${t}">${t}</span>`).join('')}</div>
+                            <p class="partner-big-level">Level ${active.level}</p>
+                            
+                            <div class="partner-exp-wrap">
+                                <div class="partner-exp-bar-bg">
+                                    <div class="partner-exp-bar-fill" style="width: ${expProg.percent}%;"></div>
+                                </div>
+                                <div class="partner-exp-text">EXP ${expProg.current} / ${expProg.needed}</div>
+                            </div>
+                            
+                            <div class="partner-stats-grid">
+                                <div class="stat-box"><span class="stat-box-label">HP</span> <span class="stat-box-value">${this.config.calculateRealMaxHp(activeSpecies.baseStats.hp, active.level)}</span></div>
+                                <div class="stat-box"><span class="stat-box-label">Attack</span> <span class="stat-box-value">${activeSpecies.baseStats.attack}</span></div>
+                                <div class="stat-box"><span class="stat-box-label">Defense</span> <span class="stat-box-value">${activeSpecies.baseStats.defense}</span></div>
+                                <div class="stat-box"><span class="stat-box-label">Speed</span> <span class="stat-box-value">${activeSpecies.baseStats.speed}</span></div>
+                            </div>
                         </div>
-                        <div class="exp-section">
-                            <div class="exp-bar-track"><div class="exp-bar-fill" style="width: ${expProg.percent}%;"></div></div>
-                            <small>${expProg.current} / ${expProg.needed} EXP to Next Level</small>
-                        </div>
-                    </div>
-                `;
+                    `;
+                } else {
+                    content.innerHTML = `<div class="partner-section"><p>No partner selected.</p></div>`;
+                }
             } else if (tab === 'party') {
                 content.innerHTML = `
-                    <div class="party-grid">
+                    <div class="flickemon-list-card">
                         ${party.map(pk => {
                             const sp = this.engine.getSpeciesForPokemon(pk);
                             if (!sp) return '';
-                            const isActive = pk.instanceId === active.instanceId;
+                            const isActive = pk.instanceId === active?.instanceId;
                             return `
-                                <div class="party-card ${isActive ? 'active-pk' : ''}" data-id="${pk.instanceId}">
-                                    <img src="${this.config.getSpriteUrl(sp.id)}" alt="${sp.name}"/>
-                                    <h4>${sp.name}</h4>
-                                    <p>Lv.${pk.level}</p>
-                                    ${isActive ? '<span class="active-badge">Active</span>' : `<button class="switch-pk-btn">Switch</button>`}
+                                <div class="flickemon-party-row ${isActive ? 'active' : 'inactive'}" data-id="${pk.instanceId}" style="cursor: ${isActive ? 'default' : 'pointer'}">
+                                    <img src="${this.config.getSpriteUrl(sp.id)}" alt="${sp.name}" class="party-sprite"/>
+                                    <div class="party-info">
+                                        <span class="party-name">${sp.name}</span>
+                                        <span class="party-level">Lv. ${pk.level}</span>
+                                    </div>
+                                    ${isActive ? '<span class="party-star">★</span>' : ''}
                                 </div>
                             `;
                         }).join('')}
                     </div>
                 `;
-                content.querySelectorAll('.switch-pk-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const id = e.target.closest('.party-card').getAttribute('data-id');
+                content.querySelectorAll('.flickemon-party-row.inactive').forEach(row => {
+                    row.addEventListener('click', async (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
                         await this.engine.switchActivePokemon(id);
                         renderTab('party');
                     });
                 });
             } else if (tab === 'pokedex') {
                 content.innerHTML = `
-                    <div class="pokedex-grid">
+                    <div class="flickemon-pokedex-grid">
                         ${this.config.POKEMON_REGISTRY.map(sp => {
                             const entry = pokedex.find(p => p.speciesId === sp.id);
                             const caught = entry && entry.caught;
                             const seen = entry && entry.seen;
                             return `
-                                <div class="dex-card ${caught ? 'caught' : seen ? 'seen' : 'unseen'}">
-                                    <span class="dex-num">#${String(sp.id).padStart(3, '0')}</span>
-                                    <img src="${seen ? this.config.getSpriteUrl(sp.id) : ''}" alt="${sp.name}" class="${!caught ? 'silhouette' : ''}"/>
-                                    <p>${seen ? sp.name : '???'}</p>
+                                <div class="pokedex-item">
+                                    ${seen 
+                                        ? `<img src="${this.config.getSpriteUrl(sp.id)}" alt="${sp.name}" class="pokedex-sprite" ${!caught ? 'style="filter: brightness(0); opacity: 0.4;"' : ''}/>` 
+                                        : `<div class="pokedex-unknown">?</div>`
+                                    }
+                                    <span class="pokedex-num">#${sp.id}</span>
+                                    ${caught ? `<span class="pokedex-name">${sp.name}</span>` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -320,23 +335,36 @@ class FlickemonUI {
                 `;
             } else if (tab === 'stats') {
                 content.innerHTML = `
-                    <div class="stats-view">
-                        <div class="stat-card-box">
-                            <h3>📊 Study & Battle Statistics</h3>
-                            <p><strong>Total Study Time:</strong> ${Math.round(this.engine.getGameState().totalMinutesWatched)} minutes</p>
-                            <p><strong>Party Size:</strong> ${party.length} Pokémon</p>
-                            <p><strong>Pokédex Caught:</strong> ${this.engine.getCaughtCount()} / ${this.config.POKEMON_REGISTRY.length}</p>
+                    <div class="flickemon-list-card">
+                        <div class="flickemon-list-item">
+                            <span class="flickemon-list-item-title">Total Watch Time</span>
+                            <span class="flickemon-list-item-sub">${(this.engine.getGameState().totalMinutesWatched / 60).toFixed(1)} hours</span>
+                        </div>
+                        <div class="flickemon-list-item">
+                            <span class="flickemon-list-item-title">Pokémon Caught</span>
+                            <span class="flickemon-list-item-sub">${this.engine.getCaughtCount()} / ${this.config.POKEMON_REGISTRY.length}</span>
+                        </div>
+                        <div class="flickemon-list-item">
+                            <span class="flickemon-list-item-title">Party Size</span>
+                            <span class="flickemon-list-item-sub">${party.length}</span>
                         </div>
                     </div>
+                    <button class="flickemon-danger-btn reset-game-btn">RESET GAME PROGRESS (TEST STARTER SELECTION)</button>
                 `;
+                content.querySelector('.reset-game-btn').addEventListener('click', async () => {
+                    if (confirm('Are you sure you want to reset your progress?')) {
+                        await this.engine.resetProgress();
+                        window.location.reload();
+                    }
+                });
             }
         };
 
         renderTab('partner');
 
-        modal.body.querySelectorAll('.hub-tab-btn').forEach(btn => {
+        tabRow.querySelectorAll('.flickemon-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                modal.body.querySelectorAll('.hub-tab-btn').forEach(b => b.classList.remove('active'));
+                tabRow.querySelectorAll('.flickemon-tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 renderTab(btn.getAttribute('data-tab'));
             });
@@ -346,26 +374,30 @@ class FlickemonUI {
     // ────────────────────────── Settings Modal ──────────────────────────
 
     openSettingsModal() {
-        const modal = this.createModalOverlay('Flickémon Settings ⚙️');
+        const modal = this.createModalOverlay('Flickémon Settings');
 
         modal.body.innerHTML = `
-            <div class="settings-modal-view">
-                <div class="settings-section">
-                    <h3>⚙️ General Options</h3>
-                    <button class="reset-progress-btn danger-btn">Reset My Game Progress 🔄</button>
-                    <p class="sub-text">Restart starter selection and reset party to 0</p>
+            <div class="flickemon-list-card">
+                <div class="flickemon-list-item">
+                    <span class="flickemon-list-item-title">Reset Game Progress</span>
+                    <span class="flickemon-list-item-sub">Restart starter selection and reset party to 0</span>
                 </div>
-                <hr/>
-                <div class="settings-section admin-section">
-                    <h3>🔒 Admin Portal</h3>
-                    <div class="admin-passcode-box">
-                        <input type="password" class="admin-passcode-input" placeholder="Enter Admin Passcode"/>
-                        <button class="unlock-admin-btn">Unlock Admin</button>
+            </div>
+            <button class="flickemon-danger-btn reset-progress-btn">RESET MY GAME PROGRESS</button>
+            <br/><br/>
+            <div class="flickemon-list-card admin-section">
+                <div class="flickemon-list-item">
+                    <span class="flickemon-list-item-title">Admin Monitoring Portal</span>
+                    <span class="flickemon-list-item-sub">Student Player Monitoring Portal (Firestore cloud backend)</span>
+                </div>
+                <div class="flickemon-list-item">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="password" class="admin-passcode-input" placeholder="Enter Admin Passcode" style="flex:1; padding:8px; border-radius:4px; border:1px solid #ccc;"/>
+                        <button class="unlock-admin-btn" style="background:#e91e63; color:white; border:none; border-radius:4px; padding:0 16px; cursor:pointer;">Unlock</button>
                     </div>
-                    <div class="admin-unlocked-panel" style="display: none;">
-                        <p class="admin-success">✅ Admin Access Granted (Passcode 9285)</p>
-                        <p class="sub-text">Student Player Monitoring Portal active in Firestore cloud backend.</p>
-                    </div>
+                </div>
+                <div class="flickemon-list-item admin-unlocked-panel" style="display: none;">
+                    <span class="flickemon-list-item-title" style="color: #10b981;">✅ Admin Access Granted (Passcode 9285)</span>
                 </div>
             </div>
         `;
@@ -373,7 +405,7 @@ class FlickemonUI {
         modal.body.querySelector('.reset-progress-btn').addEventListener('click', async () => {
             if (confirm('Are you sure you want to reset your Flickémon progress? This will reset your starter, party, and Pokédex.')) {
                 await this.engine.resetGameState();
-                this.closeModal(modal);
+                this.closeModal(modal.overlay);
             }
         });
 
@@ -414,17 +446,17 @@ class FlickemonUI {
         const overlay = document.createElement('div');
         overlay.className = 'flickemon-modal-overlay';
         overlay.innerHTML = `
-            <div class="flickemon-modal-card">
-                <div class="modal-header">
-                    <h2>${title}</h2>
-                    <button class="modal-close-btn">✕</button>
+            <div class="flickemon-modal-container">
+                <div class="flickemon-modal-header">
+                    <h2 class="flickemon-modal-title">${title}</h2>
+                    <button class="flickemon-modal-close">✕</button>
                 </div>
-                <div class="modal-body"></div>
+                <div class="flickemon-modal-content"></div>
             </div>
         `;
-        overlay.querySelector('.modal-close-btn').addEventListener('click', () => this.closeModal(overlay));
+        overlay.querySelector('.flickemon-modal-close').addEventListener('click', () => this.closeModal(overlay));
         document.body.appendChild(overlay);
-        return { overlay, body: overlay.querySelector('.modal-body') };
+        return { overlay, body: overlay.querySelector('.flickemon-modal-content') };
     }
 
     closeModal(modal) {
