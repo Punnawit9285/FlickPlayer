@@ -259,21 +259,20 @@ class FlickemonUI {
                     const speciesId = parseInt(card.getAttribute('data-id'), 10);
                     currentSelectedId = speciesId;
                     const name = card.querySelector('.starter-card-name').textContent;
-                    confirmBtn.textContent = `I CHOOSE YOU! (${name.toUpperCase()})`;
+                    const activeBtn = modal.body.querySelector('.starter-confirm-btn');
+                    activeBtn.textContent = `I CHOOSE YOU! (${name.toUpperCase()})`;
                     confirmContainer.style.display = 'block';
                 });
             });
-            
-            // Remove old listeners to prevent duplicates
-            const newConfirmBtn = confirmBtn.cloneNode(true);
-            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-            newConfirmBtn.addEventListener('click', async () => {
-                if (currentSelectedId) {
-                    await this.engine.chooseStarter(currentSelectedId);
-                    this.closeModal(modal.overlay);
-                }
-            });
         };
+
+        const globalConfirmBtn = modal.body.querySelector('.starter-confirm-btn');
+        globalConfirmBtn.addEventListener('click', async () => {
+            if (currentSelectedId) {
+                await this.engine.chooseStarter(currentSelectedId);
+                this.closeModal(modal.overlay);
+            }
+        });
 
         renderGrid(1);
 
