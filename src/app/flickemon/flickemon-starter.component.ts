@@ -3,7 +3,7 @@
  * Dynamically renders starters across Gen 1-7 with region & game titles.
  */
 
-import {Component, inject, OnInit} from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import {
     IonButton,
     IonCard,
@@ -17,8 +17,8 @@ import {
     IonLabel,
     ModalController,
 } from '@ionic/angular/standalone';
-import {FlickemonService} from './flickemon.service';
-import {PokemonSpecies, getSpriteUrl} from './flickemon.config';
+import { FlickemonService } from './flickemon.service';
+import { PokemonSpecies, getSpriteUrl } from './flickemon.config';
 
 export interface GenInfo {
     gen: number;
@@ -28,14 +28,14 @@ export interface GenInfo {
 }
 
 export const GEN_INFO_LIST: Record<string, GenInfo> = {
-    '1': {gen: 1, label: 'Gen 1', region: 'Kanto', games: 'Red & Blue'},
-    '2': {gen: 2, label: 'Gen 2', region: 'Johto', games: 'Gold, Silver, Crystal'},
-    '3': {gen: 3, label: 'Gen 3', region: 'Hoenn', games: 'Ruby, Sapphire, Emerald'},
-    '4': {gen: 4, label: 'Gen 4', region: 'Sinnoh', games: 'Diamond, Pearl, Platinum'},
-    '5': {gen: 5, label: 'Gen 5', region: 'Unova', games: 'Black & White'},
-    '6': {gen: 6, label: 'Gen 6', region: 'Kalos', games: 'X & Y'},
-    '7': {gen: 7, label: 'Gen 7', region: 'Alola', games: 'Sun & Moon'},
-    'special': {gen: 0, label: 'Special', region: 'Special Starters', games: "Yellow & Let's Go, Pikachu! / Eevee!"},
+    '1': { gen: 1, label: 'Gen 1', region: 'Kanto', games: 'Red & Blue' },
+    '2': { gen: 2, label: 'Gen 2', region: 'Johto', games: 'Gold, Silver, Crystal' },
+    '3': { gen: 3, label: 'Gen 3', region: 'Hoenn', games: 'Ruby, Sapphire, Emerald' },
+    '4': { gen: 4, label: 'Gen 4', region: 'Sinnoh', games: 'Diamond, Pearl, Platinum' },
+    '5': { gen: 5, label: 'Gen 5', region: 'Unova', games: 'Black & White' },
+    '6': { gen: 6, label: 'Gen 6', region: 'Kalos', games: 'X & Y' },
+    '7': { gen: 7, label: 'Gen 7', region: 'Alola', games: 'Sun & Moon' },
+    'special': { gen: 0, label: 'Special', region: 'Special', games: "Yellow & Let's Go, Pikachu! / Eevee!" },
 };
 
 @Component({
@@ -50,7 +50,11 @@ export const GEN_INFO_LIST: Record<string, GenInfo> = {
                     @for (genKey of getGenKeys(); track genKey) {
                         <ion-segment-button [value]="genKey">
                             <ion-label>
-                                <strong>{{ getGenInfo(genKey).region }} ({{ getGenInfo(genKey).label }})</strong><br/>
+                                @if (getGenInfo(genKey).gen === 0) {
+                                    <strong>{{ getGenInfo(genKey).label }}</strong><br/>
+                                } @else {
+                                    <strong>{{ getGenInfo(genKey).region }} ({{ getGenInfo(genKey).label }})</strong><br/>
+                                }
                                 <small style="font-size: 0.7em; opacity: 0.8;">{{ getGenInfo(genKey).games }}</small>
                             </ion-label>
                         </ion-segment-button>
@@ -329,7 +333,7 @@ export class FlickemonStarterComponent implements OnInit {
     async confirm(): Promise<void> {
         if (this.selectedId) {
             await this.flickemonService.selectStarter(this.selectedId);
-            await this.modalCtrl.dismiss({selected: this.selectedId});
+            await this.modalCtrl.dismiss({ selected: this.selectedId });
         }
     }
 }

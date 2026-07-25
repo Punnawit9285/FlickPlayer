@@ -197,7 +197,7 @@ class FlickemonUI {
                 <div class="gen-tabs">
                     ${genTabs.map(t => `
                         <button class="gen-tab-btn ${t.gen === 1 ? 'active' : ''}" data-gen="${t.gen}">
-                            <strong>${t.region} (${t.label})</strong><br/>
+                            <strong>${t.gen === 0 ? t.label : `${t.region} (${t.label})`}</strong><br/>
                             <small style="font-size: 0.7em; opacity: 0.8;">${t.games}</small>
                         </button>
                     `).join('')}
