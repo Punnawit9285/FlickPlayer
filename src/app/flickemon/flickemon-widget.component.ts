@@ -389,13 +389,13 @@ export class FlickemonOptionsPopoverComponent {
         .encounter-inline-box {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.6rem;
             background: var(--ion-color-light, rgba(255, 255, 255, 0.05));
-            border-radius: 0.5rem;
-            padding: 0.35rem 0.75rem;
-            border: 1px solid var(--ion-color-primary-tint, rgba(56, 128, 255, 0.3));
+            border-radius: 10px;
+            padding: 0.5rem 0.75rem;
+            border: 1.5px solid var(--ion-color-primary, #3b82f6);
             flex: 1;
-            min-width: 240px;
+            min-width: 250px;
             animation: slideInRight 0.35s ease;
         }
 
@@ -405,12 +405,14 @@ export class FlickemonOptionsPopoverComponent {
         }
 
         .vs-badge {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 800;
-            color: var(--ion-color-warning);
-            background: rgba(255, 196, 9, 0.15);
+            color: #d97706;
+            background: #fef3c7;
+            border: 1px solid #fde68a;
             padding: 0.15rem 0.4rem;
             border-radius: 0.35rem;
+            flex-shrink: 0;
         }
 
         .wild-sprite {

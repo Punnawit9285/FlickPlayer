@@ -79,9 +79,7 @@ class FlickemonUI {
                 <div class="hud-columns">
                     <!-- Left: Active Partner -->
                     <div class="hud-col partner-col">
-                        <div class="partner-sprite-box">
-                            <img src="${this.config.getSpriteUrl(activeSpecies.id)}" alt="${activeSpecies.name}" class="sprite-img"/>
-                        </div>
+                        <img src="${this.config.getSpriteUrl(activeSpecies.id)}" alt="${activeSpecies.name}" class="partner-mini-sprite"/>
                         <div class="partner-info">
                             <div class="name-line">
                                 <strong class="pk-name">${activeSpecies.name}</strong>
@@ -90,27 +88,26 @@ class FlickemonUI {
                             <div class="exp-bar-track">
                                 <div class="exp-bar-fill" style="width: ${expProg.percent}%;"></div>
                             </div>
-                            <div class="exp-text">${expProg.current} / ${expProg.needed} EXP</div>
+                            <div class="exp-text">EXP ${expProg.current}/${expProg.needed}</div>
                         </div>
                     </div>
 
-                    <!-- Right: Wild Opponent Battle -->
-                    <div class="hud-col battle-col">
+                    <!-- Right: Wild Opponent Battle (Outlined Box) -->
+                    <div class="hud-col battle-col-box">
                         ${wild ? `
-                            <div class="battle-sprite-box">
-                                <img src="${this.config.getSpriteUrl(wild.wildSpecies.id)}" alt="${wild.wildSpecies.name}" class="sprite-img ${wild.status}"/>
-                            </div>
+                            <span class="vs-badge">VS</span>
+                            <img src="${this.config.getSpriteUrl(wild.wildSpecies.id)}" alt="${wild.wildSpecies.name}" class="wild-mini-sprite ${wild.status}"/>
                             <div class="battle-info">
                                 <div class="name-line">
-                                    <span class="wild-tag">VS</span>
                                     <strong class="pk-name">${wild.wildSpecies.name}</strong>
                                     <span class="pk-lvl">Lv.${wild.wildLevel}</span>
                                 </div>
                                 <div class="hp-bar-track">
                                     <div class="hp-bar-fill" style="width: ${Math.round((wild.currentHp / wild.maxHp) * 100)}%;"></div>
                                 </div>
-                                <div class="hp-text">HP ${wild.currentHp} / ${wild.maxHp}</div>
-                                <div class="status-badge ${wild.status}">${wild.status === 'captured' ? 'Captured! 🎉' : wild.status === 'escaped' ? 'Escaped! 💨' : 'Fighting... ⚔️'}</div>
+                                <div class="status-line ${wild.status}">
+                                    ${wild.status === 'captured' ? `🏆 Captured! (+${wild.expGained || 0} EXP)` : wild.status === 'escaped' ? `💨 Escaped! (+${wild.expGained || 0} EXP)` : `⚔️ Fighting... (HP ${wild.currentHp}/${wild.maxHp})`}
+                                </div>
                             </div>
                         ` : '<div class="searching-text">Searching for wild Pokémon...</div>'}
                     </div>

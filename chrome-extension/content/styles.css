@@ -95,44 +95,60 @@ body.pink-theme, .pink-theme, [data-theme="pink"] {
 
 /* ────────────────────────── Flickemon Widget HUD ────────────────────────── */
 
-.hud-columns { display: flex; gap: 1rem; }
-.hud-col { flex: 1; display: flex; align-items: center; gap: 0.75rem; background: rgba(0,0,0,0.02); padding: 0.75rem; border-radius: 10px; }
+.hud-columns { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.hud-col.partner-col { flex: 1; min-width: 220px; display: flex; align-items: center; gap: 0.75rem; }
 
-.partner-sprite-box, .battle-sprite-box {
-    width: 64px;
-    height: 64px;
+.battle-col-box {
+    flex: 1;
+    min-width: 250px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: rgba(255,255,255,0.5);
-    border-radius: 8px;
+    gap: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid var(--flick-primary);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.02);
 }
-.sprite-img { width: 64px; height: 64px; object-fit: contain; }
-.sprite-img.captured { opacity: 0.6; filter: grayscale(50%); }
 
-.partner-info, .battle-info { flex: 1; }
-.name-line { display: flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; margin-bottom: 0.25rem; }
-.pk-name { font-weight: 700; }
-.pk-lvl { font-size: 0.8rem; color: var(--flick-text-muted); }
-.wild-tag { font-size: 0.75rem; font-weight: 800; color: var(--flick-danger); }
+.partner-mini-sprite, .wild-mini-sprite {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+}
+
+.partner-info, .battle-info { flex: 1; min-width: 0; }
+.name-line { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 2px; }
+.pk-name { font-weight: 700; font-size: 0.95rem; color: var(--flick-text); }
+.pk-lvl { font-size: 0.8rem; font-weight: 600; color: var(--flick-text-muted); }
+
+.vs-badge {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #d97706;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    padding: 2px 6px;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
 
 .exp-bar-track, .hp-bar-track, .progress-bar-track {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background: var(--flick-border);
     border-radius: 4px;
     overflow: hidden;
-    margin: 4px 0;
+    margin: 3px 0;
 }
-.exp-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: width 0.3s ease; }
-.hp-bar-fill { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 0.3s ease; }
-.progress-bar-fill { height: 100%; background: var(--flick-primary); transition: width 0.3s ease; }
+.exp-bar-fill { height: 100%; background: var(--flick-primary); transition: width 0.3s ease; }
+.hp-bar-fill { height: 100%; background: #dc2626; transition: width 0.3s ease; }
 
-.exp-text, .hp-text { font-size: 0.75rem; color: var(--flick-text-muted); text-align: right; }
-.status-badge { font-size: 0.75rem; font-weight: 600; margin-top: 2px; }
-.status-badge.fighting { color: var(--flick-warning); }
-.status-badge.captured { color: var(--flick-success); }
-.status-badge.escaped { color: var(--flick-danger); }
+.exp-text { font-size: 0.7rem; color: var(--flick-text-muted); text-align: left; }
+.status-line { font-size: 0.75rem; font-weight: 600; color: #dc2626; margin-top: 1px; }
+.status-line.captured { color: var(--flick-success); }
+.status-line.escaped { color: var(--flick-danger); }
 
 /* Popover Options Menu */
 .options-popover-menu {
