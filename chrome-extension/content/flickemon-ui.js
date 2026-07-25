@@ -73,6 +73,12 @@ class FlickemonUI {
                 <div class="header-actions">
                     <button class="icon-btn menu-trigger-btn" title="Options">${ellipsisSvg}</button>
                     <button class="icon-btn widget-collapse-btn" title="Toggle Collapse">${chevronUpSvg}</button>
+
+                    <!-- Options Popover Menu -->
+                    <div class="options-popover-menu" style="display: none;">
+                        <div class="popover-item game-hub-item"><span>🎮</span> Game Hub</div>
+                        <div class="popover-item settings-item"><span>⚙️</span> Settings</div>
+                    </div>
                 </div>
             </div>
             <div class="widget-body">
@@ -112,12 +118,6 @@ class FlickemonUI {
                         ` : '<div class="searching-text">Searching for wild Pokémon...</div>'}
                     </div>
                 </div>
-            </div>
-
-            <!-- Options Popover Menu -->
-            <div class="options-popover-menu" style="display: none;">
-                <div class="popover-item game-hub-item"><span>🎮</span> Game Hub</div>
-                <div class="popover-item settings-item"><span>⚙️</span> Settings</div>
             </div>
         `;
 

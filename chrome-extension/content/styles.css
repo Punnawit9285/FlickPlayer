@@ -146,24 +146,34 @@ body.pink-theme, .pink-theme, [data-theme="pink"] {
 .hp-bar-fill { height: 100%; background: #dc2626; transition: width 0.3s ease; }
 
 .exp-text { font-size: 0.7rem; color: var(--flick-text-muted); text-align: left; }
-.status-line { font-size: 0.75rem; font-weight: 600; color: #dc2626; margin-top: 1px; }
-.status-line.captured { color: var(--flick-success); }
-.status-line.escaped { color: var(--flick-danger); }
+.header-actions { display: flex; align-items: center; gap: 0.25rem; position: relative; }
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--flick-text-muted);
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+.icon-btn:hover { background: rgba(0,0,0,0.05); color: var(--flick-text); }
 
 /* Popover Options Menu */
 .options-popover-menu {
     position: absolute;
-    right: 1.5rem;
-    top: 3rem;
+    top: calc(100% + 4px);
+    right: 0;
     background: var(--flick-card-bg);
     border: 1px solid var(--flick-border);
     border-radius: 8px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    z-index: 999;
+    z-index: 9999;
     min-width: 140px;
     overflow: hidden;
+    white-space: nowrap;
 }
-.popover-item { padding: 10px 14px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; }
+.popover-item { padding: 10px 14px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: var(--flick-text); }
 .popover-item:hover { background: rgba(0,0,0,0.05); }
 
 /* Start Badge Button */
