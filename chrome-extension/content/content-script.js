@@ -21,13 +21,25 @@
         // Instantiate Flickémon UI
         const flickemonUI = new window.FlickemonUI(window.flickemonEngine);
 
-        // Inject widget into DOM
+        // Inject widget into DOM & handle header alignment
         function injectUI() {
-            // Remove top-right page header dropdown elements if present
-            document.querySelectorAll('app-theme-dropdown, .flickemon-theme-dropdown-wrapper').forEach(el => {
-                el.style.setProperty('display', 'none', 'important');
-                try { el.remove(); } catch (e) {}
-            });
+            const isHome = window.location.pathname === '/home' || window.location.pathname === '/' || window.location.pathname === '/home/';
+            document.body.classList.toggle('is-home-page', isHome);
+
+            if (isHome) {
+                document.querySelectorAll('app-theme-dropdown, .flickemon-theme-dropdown-wrapper').forEach(el => {
+                    el.style.setProperty('display', 'none', 'important');
+                });
+            } else {
+                // On course/video page, align top-right buttons vertically with web title
+                const toolbarEnd = document.querySelector('ion-toolbar ion-buttons[slot="end"]') || document.querySelector('ion-header ion-buttons[slot="end"]');
+                if (toolbarEnd) {
+                    toolbarEnd.style.setProperty('align-items', 'center', 'important');
+                    toolbarEnd.style.setProperty('align-self', 'center', 'important');
+                    toolbarEnd.style.setProperty('margin-top', '0', 'important');
+                    toolbarEnd.style.setProperty('margin-bottom', '0', 'important');
+                }
+            }
 
             const containerTarget = document.querySelector('ion-col[size="12"]') || document.querySelector('.scroll-area') || document.body;
             if (containerTarget && !containerTarget.querySelector('.flickemon-widget-card')) {
