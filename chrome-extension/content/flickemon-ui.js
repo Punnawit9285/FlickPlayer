@@ -349,14 +349,7 @@ class FlickemonUI {
                             <span class="flickemon-list-item-sub">${party.length}</span>
                         </div>
                     </div>
-                    <button class="flickemon-danger-btn reset-game-btn">RESET GAME PROGRESS (TEST STARTER SELECTION)</button>
                 `;
-                content.querySelector('.reset-game-btn').addEventListener('click', async () => {
-                    if (confirm('Are you sure you want to reset your progress?')) {
-                        await this.engine.resetProgress();
-                        window.location.reload();
-                    }
-                });
             }
         };
 

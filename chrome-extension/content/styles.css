@@ -19,39 +19,7 @@
 }
 
 
-/* Dark Theme (via body class, container class, or system preference) */
-body.dark-theme, .dark-theme, [data-theme="dark"] {
-    --flick-bg: #111827;
-    --flick-card-bg: #1f2937;
-    --flick-text: #f9fafb;
-    --flick-text-muted: #9ca3af;
-    --flick-border: #374151;
-    --flick-primary: #60a5fa;
-    --flick-primary-hover: #3b82f6;
-}
 
-@media (prefers-color-scheme: dark) {
-    :root:not(.light-theme):not(.pink-theme) {
-        --flick-bg: #111827;
-        --flick-card-bg: #1f2937;
-        --flick-text: #f9fafb;
-        --flick-text-muted: #9ca3af;
-        --flick-border: #374151;
-        --flick-primary: #60a5fa;
-        --flick-primary-hover: #3b82f6;
-    }
-}
-
-/* Pink Theme (via body class or container class) */
-body.pink-theme, .pink-theme, [data-theme="pink"] {
-    --flick-bg: #fff1f2;
-    --flick-card-bg: #ffe4e6;
-    --flick-text: #881337;
-    --flick-text-muted: #9f1239;
-    --flick-border: #fecdd3;
-    --flick-primary: #ec4899;
-    --flick-primary-hover: #db2777;
-}
 
 /* ────────────────────────── Injected Cards ────────────────────────── */
 
