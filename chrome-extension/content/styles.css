@@ -186,6 +186,7 @@ body.pink-theme, .pink-theme, [data-theme="pink"] {
     white-space: nowrap;
 }
 .popover-item { padding: 10px 14px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: var(--flick-text); }
+.popover-icon { display: flex; align-items: center; color: var(--flick-primary); }
 .popover-item:hover { background: rgba(0,0,0,0.05); }
 
 /* Start Badge Button */
