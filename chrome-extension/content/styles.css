@@ -7,12 +7,12 @@
 
 :root, body {
     --flick-bg: var(--ion-background-color, #f4f5f8);
-    --flick-card-bg: var(--ion-card-background, #ffffff);
+    --flick-card-bg: var(--ion-card-background, var(--ion-item-background, var(--ion-background-color, #ffffff)));
     --flick-text: var(--ion-text-color, #1f2937);
     --flick-text-muted: var(--ion-color-medium, #6b7280);
-    --flick-border: var(--ion-border-color, #e5e7eb);
+    --flick-border: var(--ion-border-color, var(--ion-color-step-150, #e5e7eb));
     --flick-primary: var(--ion-color-primary, #3b82f6);
-    --flick-primary-hover: #2563eb;
+    --flick-primary-hover: var(--ion-color-primary-tint, #2563eb);
     --flick-danger: var(--ion-color-danger, #ef4444);
     --flick-success: var(--ion-color-success, #10b981);
     --flick-warning: var(--ion-color-warning, #f59e0b);

@@ -48,7 +48,7 @@ import { Subscription } from 'rxjs';
                 <ion-label>Game Hub</ion-label>
             </ion-item>
             <ion-item button (click)="selectOption('settings')">
-                <ion-icon name="cog" slot="start" color="medium"></ion-icon>
+                <ion-icon name="cog" slot="start" color="primary"></ion-icon>
                 <ion-label>Settings</ion-label>
             </ion-item>
         </ion-list>
@@ -57,10 +57,11 @@ import { Subscription } from 'rxjs';
         .flickemon-options-list {
             padding: 0.25rem 0;
             margin: 0;
-            background: var(--ion-card-background, var(--ion-background-color, #fff));
+            background: var(--ion-card-background, var(--ion-item-background, var(--ion-background-color, #fff)));
         }
 
         ion-item {
+            --background: transparent;
             --padding-start: 0.85rem;
             --padding-end: 0.85rem;
             --min-height: 44px;
