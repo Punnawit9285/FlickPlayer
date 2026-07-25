@@ -6,7 +6,7 @@
  */
 
 :root, body {
-    --flick-bg: var(--ion-background-color, #f4f5f8);
+    --flick-bg: var(--ion-background-color, #ffffff);
     --flick-card-bg: var(--ion-card-background, var(--ion-item-background, var(--ion-background-color, #ffffff)));
     --flick-text: var(--ion-text-color, #1f2937);
     --flick-text-muted: var(--ion-color-medium, #6b7280);
@@ -300,7 +300,7 @@
     max-width: 500px;
     height: 80vh;
     max-height: 600px;
-    background: var(--flick-bg, #fff0f5);
+    background: var(--flick-bg);
     border-radius: 12px;
     overflow: hidden;
     display: flex;
@@ -375,11 +375,9 @@
 .flickemon-modal-content {
     flex: 1;
     overflow-y: auto;
-    background: #fff5f8; /* very light pink */
-    position: relative;
     padding: 16px;
+    background: var(--flick-bg);
 }
-.dark-theme .flickemon-modal-content { background: var(--flick-bg); }
 
 /* Type Badges */
 .type-badge {
@@ -413,13 +411,12 @@
 
 /* Settings / Stats rows */
 .flickemon-list-card {
-    background: #fce4ec; /* slightly darker pink */
+    background: var(--flick-card-bg);
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 16px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
-.dark-theme .flickemon-list-card { background: var(--flick-card-bg); }
 
 .flickemon-list-item {
     display: flex;
@@ -513,9 +510,8 @@
 
 .partner-exp-wrap { max-width: 300px; margin: 8px auto; }
 .partner-exp-bar-bg { height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; overflow: hidden; }
-.partner-exp-bar-fill { height: 100%; background: #e91e63; transition: width 0.3s; }
-.partner-exp-text { font-size: 0.8rem; color: #c2185b; margin-top: 4px; }
-.dark-theme .partner-exp-text { color: var(--flick-text-muted); }
+.partner-exp-bar-fill { height: 100%; background: var(--flick-primary); transition: width 0.3s; }
+.partner-exp-text { font-size: 0.8rem; color: var(--flick-text-muted); margin-top: 4px; }
 
 .partner-stats-grid {
     display: grid;
@@ -524,8 +520,6 @@
     max-width: 280px;
     margin: 16px auto;
 }
-.stat-box { display: flex; justify-content: space-between; padding: 8px 12px; background: #fff; border-radius: 8px; }
-.dark-theme .stat-box { background: var(--flick-card-bg); }
-.stat-box-label { font-size: 0.8rem; color: #c2185b; }
-.dark-theme .stat-box-label { color: var(--flick-text-muted); }
-.stat-box-value { font-size: 0.85rem; font-weight: 700; }
+.stat-box { display: flex; justify-content: space-between; padding: 8px 12px; background: var(--flick-card-bg); border-radius: 8px; }
+.stat-box-label { font-size: 0.8rem; color: var(--flick-text-muted); }
+.stat-box-value { font-size: 0.85rem; font-weight: 700; color: var(--flick-text); }
