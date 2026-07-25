@@ -258,8 +258,8 @@ class FlickemonUI {
                     card.classList.add('selected');
                     const speciesId = parseInt(card.getAttribute('data-id'), 10);
                     currentSelectedId = speciesId;
-                    const name = card.querySelector('.starter-card-name').innerText;
-                    confirmBtn.innerText = `I CHOOSE YOU! (${name.toUpperCase()})`;
+                    const name = card.querySelector('.starter-card-name').textContent;
+                    confirmBtn.textContent = `I CHOOSE YOU! (${name.toUpperCase()})`;
                     confirmContainer.style.display = 'block';
                 });
             });
