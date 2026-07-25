@@ -23,6 +23,12 @@
 
         // Inject widget into DOM
         function injectUI() {
+            // Remove top-right header dropdown elements if present
+            document.querySelectorAll('app-theme-dropdown, .flickemon-theme-dropdown-wrapper').forEach(el => {
+                el.style.setProperty('display', 'none', 'important');
+                try { el.remove(); } catch (e) {}
+            });
+
             const containerTarget = document.querySelector('ion-col[size="12"]') || document.querySelector('.scroll-area') || document.body;
             if (containerTarget && !containerTarget.querySelector('.flickemon-widget-card')) {
                 const widgetWrapper = document.createElement('div');
