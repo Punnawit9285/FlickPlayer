@@ -259,7 +259,7 @@ class FlickemonUI {
                     const speciesId = parseInt(card.getAttribute('data-id'), 10);
                     currentSelectedId = speciesId;
                     const name = card.querySelector('.starter-card-name').innerText;
-                    confirmBtn.innerText = \`I CHOOSE YOU! (\${name.toUpperCase()})\`;
+                    confirmBtn.innerText = `I CHOOSE YOU! (${name.toUpperCase()})`;
                     confirmContainer.style.display = 'block';
                 });
             });
