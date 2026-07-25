@@ -19,6 +19,45 @@ class FlickemonEngine {
         this.wildListeners = [];
         this.encounterListeners = [];
         this.evolutionListeners = [];
+        this.adminDamageMultiplier = 1;
+    }
+
+    adminInstantKillOpponent() {
+        if (this.wildOpponent && (this.wildOpponent.status === 'fighting' || this.wildOpponent.status === 'battling')) {
+            this.wildHpAcc = 0;
+            this.onVideoProgress(0.001);
+        }
+    }
+
+    adminSetDamageMultiplier(multiplier) {
+        this.adminDamageMultiplier = Math.max(1, multiplier);
+    }
+
+    adminGetDamageMultiplier() {
+        return this.adminDamageMultiplier;
+    }
+
+    async adminSetPokemonLevel(level) {
+        const active = this.getActivePokemon();
+        if (!active) return;
+
+        const targetLevel = Math.min(100, Math.max(1, level));
+        active.level = targetLevel;
+        active.totalExp = this.config.expForLevel(targetLevel);
+
+        const evolution = this.config.canEvolveAt(active.speciesId, active.level);
+        if (evolution) {
+            const fromSpecies = this.config.getSpeciesById(active.speciesId);
+            const toSpecies = this.config.getSpeciesById(evolution.toId);
+            if (fromSpecies && toSpecies) {
+                active.speciesId = evolution.toId;
+                this.updatePokedex(evolution.toId, true);
+                this.emitEvolution(fromSpecies, toSpecies);
+            }
+        }
+
+        this.emitState();
+        await this.saveGameState();
     }
 
     createEmptyState() {
@@ -161,7 +200,7 @@ class FlickemonEngine {
 
             // Damage calculation (~150 seconds / 2.5 mins to defeat)
             const TARGET_BATTLE_SECONDS = 150;
-            const damagePerSec = this.wildOpponent.maxHp / TARGET_BATTLE_SECONDS;
+            const damagePerSec = (this.wildOpponent.maxHp / TARGET_BATTLE_SECONDS) * this.adminDamageMultiplier;
             this.wildHpAcc -= secondsWatched * damagePerSec;
             this.wildOpponent.currentHp = Math.max(0, Math.ceil(this.wildHpAcc));
 

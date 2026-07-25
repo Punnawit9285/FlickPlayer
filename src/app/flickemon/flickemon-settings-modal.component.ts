@@ -23,10 +23,12 @@ import {
     IonBadge,
     ModalController,
     AlertController,
+    IonSegment,
+    IonSegmentButton,
 } from '@ionic/angular/standalone';
 import { FlickemonService, PlayerSummary } from './flickemon.service';
 import { addIcons } from 'ionicons';
-import { close, lockClosed, key, refresh, shieldCheckmark, trash, eye, eyeOff } from 'ionicons/icons';
+import { close, lockClosed, key, refresh, shieldCheckmark, trash, skull } from 'ionicons/icons';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -99,12 +101,39 @@ import { FormsModule } from '@angular/forms';
                     } @else {
                         <div class="admin-panel">
                             <div class="admin-header-row">
-                                <h3>Student Player Monitor (UID Tracking)</h3>
+                                <h3>Admin Tools & Player Monitor</h3>
                                 <ion-button size="small" fill="outline" color="medium" (click)="lockAdmin()">
                                     <ion-icon name="lock-closed" slot="start"></ion-icon> Lock
                                 </ion-button>
                             </div>
 
+                            <!-- Local Testing Tools -->
+                            <div class="admin-testing-section" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(var(--ion-color-warning-rgb), 0.08); border-radius: 8px;">
+                                <h4 style="color: var(--ion-color-warning-shade); margin: 0 0 0.75rem 0; font-weight: 700;">⚡ Local Game Testing Tools</h4>
+                                
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; align-items: center;">
+                                    <ion-button color="danger" size="small" (click)="instantKill()">
+                                        <ion-icon name="skull" slot="start"></ion-icon> Instant Kill Opponent
+                                    </ion-button>
+                                </div>
+
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; align-items: center; flex-wrap: wrap;">
+                                    <span style="font-size: 0.85rem; font-weight: 600;">Damage Speed:</span>
+                                    <ion-segment [value]="currentDamageMultiplier.toString()" (ionChange)="setDamageMultiplier($event)" style="max-width: 220px;">
+                                        <ion-segment-button value="1"><ion-label>1x</ion-label></ion-segment-button>
+                                        <ion-segment-button value="10"><ion-label>10x</ion-label></ion-segment-button>
+                                        <ion-segment-button value="100"><ion-label>100x</ion-label></ion-segment-button>
+                                    </ion-segment>
+                                </div>
+
+                                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                    <span style="font-size: 0.85rem; font-weight: 600;">Set Level:</span>
+                                    <ion-input type="number" min="1" max="100" [(ngModel)]="targetLevel" placeholder="Level" style="max-width: 100px; --padding-start: 8px; border: 1px solid var(--ion-color-medium); border-radius: 4px;"></ion-input>
+                                    <ion-button color="primary" size="small" (click)="setPartnerLevel()">Set Level</ion-button>
+                                </div>
+                            </div>
+
+                            <h3 style="margin-bottom: 0.5rem;">Student Player Monitor (UID Tracking)</h3>
                             <ion-list lines="full">
                                 @for (player of playersList; track player.uid) {
                                     <ion-item>
@@ -226,6 +255,8 @@ import { FormsModule } from '@angular/forms';
         IonLabel,
         IonInput,
         IonBadge,
+        IonSegment,
+        IonSegmentButton,
         FormsModule,
     ],
 })
@@ -240,9 +271,31 @@ export class FlickemonSettingsModalComponent implements OnInit {
 
     playersList: PlayerSummary[] = [];
     isHidden = false;
+    targetLevel: number = 5;
 
     constructor() {
-        addIcons({ close, lockClosed, key, refresh, shieldCheckmark, trash });
+        addIcons({ close, lockClosed, key, refresh, shieldCheckmark, trash, skull });
+    }
+
+    get currentDamageMultiplier(): number {
+        return this.flickemonService.adminGetDamageMultiplier();
+    }
+
+    instantKill(): void {
+        this.flickemonService.adminInstantKillOpponent();
+    }
+
+    setDamageMultiplier(ev: any): void {
+        const val = parseInt(ev.detail.value, 10);
+        if (val) {
+            this.flickemonService.adminSetDamageMultiplier(val);
+        }
+    }
+
+    setPartnerLevel(): void {
+        if (this.targetLevel && this.targetLevel >= 1 && this.targetLevel <= 100) {
+            this.flickemonService.adminSetPokemonLevel(this.targetLevel);
+        }
     }
 
     ngOnInit(): void { }

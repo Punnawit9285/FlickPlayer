@@ -440,8 +440,25 @@ class FlickemonUI {
                         <button class="unlock-admin-btn" style="background:#e91e63; color:white; border:none; border-radius:4px; padding:0 16px; cursor:pointer;">Unlock</button>
                     </div>
                 </div>
-                <div class="flickemon-list-item admin-unlocked-panel" style="display: none;">
-                    <span class="flickemon-list-item-title" style="color: #10b981;">✅ Admin Access Granted (Passcode 9285)</span>
+                <div class="flickemon-list-item admin-unlocked-panel" style="display: none; padding: 12px;">
+                    <span class="flickemon-list-item-title" style="color: #10b981; display: block; margin-bottom: 12px;">✅ Admin Access Granted (Passcode 9285)</span>
+                    <div style="background: rgba(233,30,99,0.06); padding: 12px; border-radius: 8px;">
+                        <h4 style="margin: 0 0 8px 0; color: var(--flick-primary);">⚡ Local Game Testing Tools</h4>
+                        <div style="margin-bottom: 8px;">
+                            <button class="admin-kill-btn" style="background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:700; cursor:pointer;">☠️ Instant Kill Opponent</button>
+                        </div>
+                        <div style="margin-bottom: 8px; display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.85rem; font-weight:600;">Damage Speed:</span>
+                            <button class="dmg-spd-btn" data-spd="1" style="padding:4px 8px; border-radius:4px; border:1px solid #ccc; cursor:pointer; background:var(--flick-primary); color:#fff;">1x</button>
+                            <button class="dmg-spd-btn" data-spd="10" style="padding:4px 8px; border-radius:4px; border:1px solid #ccc; cursor:pointer;">10x</button>
+                            <button class="dmg-spd-btn" data-spd="100" style="padding:4px 8px; border-radius:4px; border:1px solid #ccc; cursor:pointer;">100x</button>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.85rem; font-weight:600;">Set Level:</span>
+                            <input type="number" class="admin-lvl-input" min="1" max="100" value="5" style="width:60px; padding:4px; border-radius:4px; border:1px solid #ccc; background:var(--flick-card-bg); color:var(--flick-text);"/>
+                            <button class="admin-set-lvl-btn" style="background:var(--flick-primary); color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-weight:700;">Set Level</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -462,6 +479,30 @@ class FlickemonUI {
                 adminPanel.style.display = 'block';
             } else {
                 alert('Invalid Admin Passcode!');
+            }
+        });
+
+        adminPanel.querySelector('.admin-kill-btn').addEventListener('click', () => {
+            this.engine.adminInstantKillOpponent();
+        });
+
+        adminPanel.querySelectorAll('.dmg-spd-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const spd = parseInt(btn.getAttribute('data-spd'), 10);
+                this.engine.adminSetDamageMultiplier(spd);
+                adminPanel.querySelectorAll('.dmg-spd-btn').forEach(b => {
+                    b.style.background = 'transparent';
+                    b.style.color = 'var(--flick-text)';
+                });
+                btn.style.background = 'var(--flick-primary)';
+                btn.style.color = '#fff';
+            });
+        });
+
+        adminPanel.querySelector('.admin-set-lvl-btn').addEventListener('click', async () => {
+            const lvl = parseInt(adminPanel.querySelector('.admin-lvl-input').value, 10);
+            if (lvl >= 1 && lvl <= 100) {
+                await this.engine.adminSetPokemonLevel(lvl);
             }
         });
     }

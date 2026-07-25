@@ -119,6 +119,7 @@ export class FlickemonService {
     evolution$: Observable<{from: PokemonSpecies; to: PokemonSpecies}> = this.evolutionSubject.asObservable();
 
     private respawnTimer: any = null;
+    private adminDamageMultiplier = 1;
 
     constructor() {
         this.authService.user$.subscribe(user => {
@@ -306,6 +307,46 @@ export class FlickemonService {
         }
     }
 
+    // ─────────────────────────── Admin Testing Tools ───────────────────────────
+
+    public adminInstantKillOpponent(): void {
+        if (this.wildOpponent && this.wildOpponent.status === 'fighting') {
+            this.wildHpAcc = 0;
+            this.onVideoProgress(0.001);
+        }
+    }
+
+    public adminSetDamageMultiplier(multiplier: number): void {
+        this.adminDamageMultiplier = Math.max(1, multiplier);
+    }
+
+    public adminGetDamageMultiplier(): number {
+        return this.adminDamageMultiplier;
+    }
+
+    public adminSetPokemonLevel(level: number): void {
+        const active = this.getActivePokemon();
+        if (!active) return;
+        
+        const targetLevel = Math.min(MAX_LEVEL, Math.max(1, level));
+        active.level = targetLevel;
+        active.totalExp = expForLevel(targetLevel);
+
+        const evolution = canEvolveAt(active.speciesId, active.level);
+        if (evolution) {
+            const fromSpecies = getSpeciesById(active.speciesId);
+            const toSpecies = getSpeciesById(evolution.toId);
+            if (fromSpecies && toSpecies) {
+                active.speciesId = evolution.toId;
+                this.updatePokedex(evolution.toId, true);
+                this.evolutionSubject.next({from: fromSpecies, to: toSpecies});
+            }
+        }
+
+        this.emitState();
+        this.saveGameState();
+    }
+
     /**
      * Record video watch time and process attack damage on wild opponent.
      * Note: EXP is awarded ONLY after defeating/capturing the opponent!
@@ -355,7 +396,7 @@ export class FlickemonService {
 
             // Secret damage calculation: Defeats wild opponent over ~150 seconds (2.5 mins) of study time
             const TARGET_BATTLE_SECONDS = 150;
-            const damagePerSec = this.wildOpponent.maxHp / TARGET_BATTLE_SECONDS;
+            const damagePerSec = (this.wildOpponent.maxHp / TARGET_BATTLE_SECONDS) * this.adminDamageMultiplier;
             this.wildHpAcc -= secondsWatched * damagePerSec;
             this.wildOpponent.currentHp = Math.max(0, Math.ceil(this.wildHpAcc));
 
