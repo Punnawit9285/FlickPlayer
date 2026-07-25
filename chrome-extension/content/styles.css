@@ -79,6 +79,7 @@ body.pink-theme, .pink-theme, [data-theme="pink"] {
 }
 
 .header-left { display: flex; align-items: center; gap: 0.5rem; }
+.header-icon-svg { color: var(--flick-primary); width: 22px; height: 22px; display: inline-block; vertical-align: middle; }
 .header-actions { display: flex; align-items: center; gap: 0.25rem; }
 
 .icon-btn {

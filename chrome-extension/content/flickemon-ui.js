@@ -36,12 +36,17 @@ class FlickemonUI {
     }
 
     updateWidgetView(card, state, wild) {
+        const gameControllerSvg = `<svg class="header-icon-svg" viewBox="0 0 512 512" width="22" height="22" fill="currentColor"><path d="M467.51 248.83c-18.4-83.18-45.69-136.24-89.43-149.17A91.5 91.5 0 00352 96c-26.89 0-49.57 11.75-68.64 35.57-14.86 18.57-23.77 34.33-27.36 41.52-3.59-7.19-12.5-22.95-27.36-41.52C209.57 107.75 186.89 96 160 96a91.5 91.5 0 00-26.08 3.66c-43.74 12.93-71 65.99-89.43 149.17C26.15 331.67 18 412 18 412a14 14 0 0013.9 16c21.71.09 46.12-3.12 70.36-17.72 27.69-16.68 53-43.4 69.74-67.66 11.53-16.7 18-28.62 18-28.62s6.47 11.92 18 28.62c16.74 24.26 42.05 51 69.74 67.66 24.24 14.6 48.65 17.81 70.36 17.72A14 14 0 00494 412c0 0-8.15-80.33-26.49-163.17zM160 256a24 24 0 1124-24 24.03 24.03 0 01-24 24zm200 0a24 24 0 1124-24 24.03 24.03 0 01-24 24z"/></svg>`;
+        const ellipsisSvg = `<svg viewBox="0 0 512 512" width="18" height="18" fill="currentColor"><circle cx="256" cy="96" r="48"/><circle cx="256" cy="256" r="48"/><circle cx="256" cy="416" r="48"/></svg>`;
+        const chevronDownSvg = `<svg viewBox="0 0 512 512" width="18" height="18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48"><path d="M112 184l144 144 144-144"/></svg>`;
+        const chevronUpSvg = `<svg viewBox="0 0 512 512" width="18" height="18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48"><path d="M112 328l144-144 144 144"/></svg>`;
+
         if (!state.hasStarted) {
             // Not started view
             card.innerHTML = `
                 <div class="flickemon-header start-header">
                     <div class="header-left">
-                        <span class="header-icon">🎮</span>
+                        ${gameControllerSvg}
                         <span class="header-title">Flickémon</span>
                     </div>
                     <button class="start-game-badge-btn">Start Game ✨</button>
@@ -62,12 +67,12 @@ class FlickemonUI {
         card.innerHTML = `
             <div class="flickemon-header">
                 <div class="header-left">
-                    <span class="header-icon">🎮</span>
+                    ${gameControllerSvg}
                     <span class="header-title">Flickémon</span>
                 </div>
                 <div class="header-actions">
-                    <button class="icon-btn menu-trigger-btn" title="Options">⋮</button>
-                    <button class="icon-btn widget-collapse-btn" title="Collapse">▼</button>
+                    <button class="icon-btn menu-trigger-btn" title="Options">${ellipsisSvg}</button>
+                    <button class="icon-btn widget-collapse-btn" title="Toggle Collapse">${chevronUpSvg}</button>
                 </div>
             </div>
             <div class="widget-body">
@@ -147,7 +152,7 @@ class FlickemonUI {
         collapseBtn.addEventListener('click', () => {
             isCollapsed = !isCollapsed;
             widgetBody.style.display = isCollapsed ? 'none' : 'block';
-            collapseBtn.textContent = isCollapsed ? '▲' : '▼';
+            collapseBtn.innerHTML = isCollapsed ? chevronDownSvg : chevronUpSvg;
         });
     }
 
