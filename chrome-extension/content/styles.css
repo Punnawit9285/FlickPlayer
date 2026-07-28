@@ -366,13 +366,15 @@
 .type-pill.fighting { background: #c22e28; }
 
 @keyframes damage-flash {
-    0% { filter: brightness(1); transform: scale(1); }
-    30% { filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); transform: scale(1.1); }
-    100% { filter: brightness(1); transform: scale(1); }
+    0% { filter: brightness(1) drop-shadow(0 0 0px transparent); transform: scale(1); opacity: 1; }
+    25% { filter: brightness(2.5) sepia(1) hue-rotate(-50deg) saturate(5) drop-shadow(0 0 10px #ff0000); transform: scale(0.9) rotate(-4deg); opacity: 0.5; }
+    50% { filter: brightness(3) drop-shadow(0 0 14px #ff0000); transform: scale(1.15) rotate(4deg); opacity: 1; }
+    75% { filter: brightness(2) drop-shadow(0 0 8px #ff0000); transform: scale(0.95); opacity: 0.6; }
+    100% { filter: brightness(1) drop-shadow(0 0 0px transparent); transform: scale(1); opacity: 1; }
 }
 
 .damage-flash {
-    animation: damage-flash 0.25s ease-in-out;
+    animation: damage-flash 0.4s ease-in-out !important;
 }
 
 /* Evolution Overlay */
