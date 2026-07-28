@@ -142,25 +142,23 @@ class FlickemonUI {
         const collapseBtn = card.querySelector('.widget-collapse-btn');
         const widgetBody = card.querySelector('.widget-body');
 
-        menuBtn.addEventListener('click', (e) => {
+        menuBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
             this.popoverOpen = !this.popoverOpen;
-            popover.style.display = this.popoverOpen ? 'block' : 'none';
+            if (popover) popover.style.display = this.popoverOpen ? 'block' : 'none';
         });
 
-
-
-        card.querySelector('.game-hub-item').addEventListener('click', (e) => {
+        card.querySelector('.game-hub-item')?.addEventListener('click', (e) => {
             e.stopPropagation();
             this.popoverOpen = false;
-            popover.style.display = 'none';
+            if (popover) popover.style.display = 'none';
             this.openGameHub();
         });
 
-        card.querySelector('.settings-item').addEventListener('click', (e) => {
+        card.querySelector('.settings-item')?.addEventListener('click', (e) => {
             e.stopPropagation();
             this.popoverOpen = false;
-            popover.style.display = 'none';
+            if (popover) popover.style.display = 'none';
             this.openSettingsModal();
         });
 
@@ -264,16 +262,21 @@ class FlickemonUI {
                     card.classList.add('selected');
                     const speciesId = parseInt(card.getAttribute('data-id'), 10);
                     currentSelectedId = speciesId;
-                    const name = card.querySelector('.starter-card-name').textContent;
+                    const nameEl = card.querySelector('.starter-card-name');
+                    const name = nameEl ? nameEl.textContent : '';
                     const activeBtn = modal.body.querySelector('.starter-confirm-btn');
-                    activeBtn.textContent = `I CHOOSE YOU! (${name.toUpperCase()})`;
-                    confirmContainer.style.display = 'block';
+                    if (activeBtn) {
+                        activeBtn.textContent = `I CHOOSE YOU! (${name.toUpperCase()})`;
+                    }
+                    if (confirmContainer) {
+                        confirmContainer.style.display = 'block';
+                    }
                 });
             });
         };
 
         const globalConfirmBtn = modal.body.querySelector('.starter-confirm-btn');
-        globalConfirmBtn.addEventListener('click', async () => {
+        globalConfirmBtn?.addEventListener('click', async () => {
             if (currentSelectedId) {
                 await this.engine.chooseStarter(currentSelectedId);
                 this.closeModal(modal.overlay);
