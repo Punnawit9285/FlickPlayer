@@ -65,9 +65,6 @@ export class ListPage implements OnInit {
         addIcons({ bookOutline, videocamOutline });
     }
 
-    constructor() {
-    }
-
     ngOnInit() {
         this.coursesWithVideos$ = this.route.paramMap.pipe(
             switchMap(s => {
@@ -148,8 +145,6 @@ export class ListPage implements OnInit {
             })
         );
     }
-
-    themeService = inject(ThemeService);
 
     getYearColor(): string {
         return this.themeService.isPinkMode ? colorByFolderNamePink(this.year) : colorByFolderName(this.year);
