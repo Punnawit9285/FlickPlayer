@@ -42,6 +42,7 @@ import {AsyncPipe, DatePipe, DecimalPipe, NgClass} from '@angular/common';
 import {ModalEvaluationComponent} from './modal-evaluation.component';
 import {ThemeService} from '../../theme.service';
 import {ThemeDropdownComponent} from '../../shared/theme-dropdown.component';
+import {PomodoroTimerComponent} from '../../shared/pomodoro-timer.component';
 
 @Component({
     selector: 'app-course',
@@ -75,6 +76,7 @@ import {ThemeDropdownComponent} from '../../shared/theme-dropdown.component';
         DatePipe,
         IonButtons,
         ThemeDropdownComponent,
+        PomodoroTimerComponent,
     ]
 })
 export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
