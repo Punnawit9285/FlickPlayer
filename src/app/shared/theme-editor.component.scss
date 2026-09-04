@@ -1,0 +1,155 @@
+.theme-section {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--flick-muted-text);
+}
+
+.preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: 0.5rem;
+}
+
+.preset-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.6rem;
+    border: 1px solid var(--ion-border-color, var(--ion-color-step-150));
+    border-radius: 10px;
+    background: var(--flick-surface);
+    color: var(--ion-text-color);
+    text-align: left;
+    cursor: pointer;
+}
+
+.preset-card.selected {
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 0 0 1px var(--ion-color-primary);
+}
+
+.preset-preview {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.4rem;
+    border-radius: 6px;
+    background: var(--preview-background);
+}
+
+.preview-chip {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+}
+
+.preview-primary {
+    background: var(--preview-primary);
+}
+
+.preview-secondary {
+    background: var(--preview-secondary);
+}
+
+.preset-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.preset-description {
+    font-size: 0.72rem;
+    color: var(--flick-muted-text);
+}
+
+.swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+
+.swatch {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--ion-border-color, var(--ion-color-step-150));
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.swatch.selected {
+    box-shadow: 0 0 0 2px var(--ion-background-color), 0 0 0 4px var(--ion-color-primary);
+}
+
+.swatch-picker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--flick-surface-muted);
+    color: var(--ion-text-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.swatch-picker input,
+.color-field input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.color-field {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.color-preview {
+    display: inline-block;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 1px solid var(--ion-border-color, var(--ion-color-step-150));
+    border-radius: 6px;
+}
+
+.control-item {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+}
+
+.control-range {
+    max-width: 60%;
+    padding-inline-end: 0;
+}
+
+.image-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.image-preview {
+    width: 4rem;
+    height: 2.5rem;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--ion-border-color, var(--ion-color-step-150));
+}
+
+.file-input {
+    display: none;
+}
+
+.hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.72rem;
+    color: var(--flick-muted-text);
+}

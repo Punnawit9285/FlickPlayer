@@ -1,13 +1,14 @@
+import {SERIES_COUNT} from './app/theme/theme-presets';
+
+/** Stable index for a name, so a folder always gets the same colour from the theme's series. */
+function seriesIndex(name: string): number {
+    let hash = 0;
+    for (const character of name ?? '') {
+        hash = (hash * 31 + character.charCodeAt(0)) % 1000003;
+    }
+    return hash % SERIES_COUNT;
+}
+
 export function colorByFolderName(name: string) {
-    const colorMap = {
-        '1st year': '#00BCD4',
-        '2nd year': '#FF9800',
-        '3rd year': '#795548',
-        '4th year': '#9C27B0',
-        '5th year': '#4CAF50',
-        '6th year': '#E91E63',
-        'NLE1': '#607D8B',
-        'NLE2': '#FDD835'
-    };
-    return colorMap[name] || 'gray';
+    return `var(--flick-series-${seriesIndex(name)})`;
 }

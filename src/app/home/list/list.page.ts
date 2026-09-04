@@ -6,6 +6,7 @@ import { ManService, SearchVideoResult } from '../../man.service';
 import { colorByFolderName } from '../../../helpers';
 import {
     IonBackButton,
+    IonButtons,
     IonContent,
     IonHeader,
     IonItem,
@@ -18,6 +19,7 @@ import {
     IonToolbar
 } from '@ionic/angular/standalone';
 import { AsyncPipe, NgStyle } from '@angular/common';
+import { ThemeButtonComponent } from '../../shared/theme-button.component';
 
 export interface EnrichedSearchResult extends SearchVideoResult {
     courseName?: string;
@@ -31,7 +33,7 @@ export interface EnrichedSearchResult extends SearchVideoResult {
     imports: [
         IonHeader, IonToolbar, RouterLink, IonBackButton, IonTitle, NgStyle,
         IonContent, IonList, IonListHeader, IonItem, IonLabel, AsyncPipe,
-        IonSearchbar, IonSpinner,
+        IonSearchbar, IonSpinner, IonButtons, ThemeButtonComponent,
     ]
 })
 export class ListPage implements OnInit {

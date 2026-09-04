@@ -10,6 +10,7 @@ import {
     AlertController,
     IonBackButton,
     IonButton,
+    IonButtons,
     IonCard,
     IonCardContent,
     IonCardHeader,
@@ -41,6 +42,7 @@ import { AsyncPipe, DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { ModalEvaluationComponent } from './modal-evaluation.component';
 import { PomodoroTimerComponent } from '../../shared/pomodoro-timer.component';
 import { StudyStatsService } from '../../study-stats.service';
+import { ThemeButtonComponent } from '../../shared/theme-button.component';
 
 @Component({
     selector: 'app-course',
@@ -73,6 +75,8 @@ import { StudyStatsService } from '../../study-stats.service';
         DecimalPipe,
         DatePipe,
         PomodoroTimerComponent,
+        IonButtons,
+        ThemeButtonComponent,
     ]
 })
 export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
