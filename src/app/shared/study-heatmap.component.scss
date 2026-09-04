@@ -26,8 +26,14 @@
     font-weight: 600;
 }
 
+.guide-button {
+    margin: 0 -0.35rem 0 auto;
+    --padding-start: 0.35rem;
+    --padding-end: 0.35rem;
+    --color: var(--flick-muted-text);
+}
+
 .collapse-icon {
-    margin-left: auto;
     color: var(--flick-muted-text);
 }
 

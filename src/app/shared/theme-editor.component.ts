@@ -96,25 +96,10 @@ export class ThemeEditorComponent {
             ?? this.themeService.preview(settings.custom.seed)['--ion-background-color'];
     }
 
-    intensityValue(settings: ThemeSettings): number {
-        const options = this.themeService.intensityOptions;
-        const intensity = settings.custom.seed.intensity;
-        return options.reduce((closest, option) =>
-            Math.abs(option.value - intensity) < Math.abs(closest - intensity) ? option.value : closest,
-            options[0].value);
-    }
-
     onSchemeChange(event: Event): void {
         const value = detailValue<SchemePreference>(event);
         if (value) {
             this.themeService.setCustomScheme(value);
-        }
-    }
-
-    onIntensityChange(event: Event): void {
-        const value = detailValue<number>(event);
-        if (typeof value === 'number') {
-            this.themeService.setIntensity(value);
         }
     }
 

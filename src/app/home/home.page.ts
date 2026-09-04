@@ -3,7 +3,7 @@ import {Observable, Subject, combineLatest, of} from 'rxjs';
 import {CourseListResponse, Lecture, ManService, SearchVideoResult} from '../man.service';
 import {Router, RouterLink} from '@angular/router';
 import {AuthService} from '../auth.service';
-import {colorByFolderName} from '../../helpers';
+import {colorByFolderName, contrastByFolderName} from '../../helpers';
 import {addIcons} from "ionicons";
 import {logOutOutline, searchOutline} from "ionicons/icons";
 import {debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
@@ -123,6 +123,7 @@ export class HomePage implements OnInit {
     }
 
     protected readonly colorByFolderName = colorByFolderName;
+    protected readonly contrastByFolderName = contrastByFolderName;
     protected readonly Object = Object;
 
     goToLastVideo(lastVideo: Lecture) {

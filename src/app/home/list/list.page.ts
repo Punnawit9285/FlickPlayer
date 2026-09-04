@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EMPTY, Observable, Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { ManService, SearchVideoResult } from '../../man.service';
-import { colorByFolderName } from '../../../helpers';
+import { colorByFolderName, contrastByFolderName } from '../../../helpers';
 import {
     IonBackButton,
     IonButtons,
@@ -124,6 +124,7 @@ export class ListPage implements OnInit {
     }
 
     protected readonly colorByFolderName = colorByFolderName;
+    protected readonly contrastByFolderName = contrastByFolderName;
 
     private groupByAcademicYear(courses: { name: string, is_remote: boolean, id: number, link: string[] }[]) {
         const groups = new Map<string, typeof courses>();

@@ -54,6 +54,8 @@ export interface ThemeTemplate {
     name: string;
     description: string;
     seed: ThemeSeed;
+    /** Page colour the template starts from; null lets it be derived from the accent. */
+    background: string | null;
 }
 
 export interface ThemeModeOption {
@@ -61,11 +63,6 @@ export interface ThemeModeOption {
     label: string;
     description: string;
     icon: string;
-}
-
-export interface IntensityOption {
-    value: number;
-    label: string;
 }
 
 export interface SchemeOption {

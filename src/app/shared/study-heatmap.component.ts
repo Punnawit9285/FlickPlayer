@@ -1,5 +1,6 @@
 import {AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {
+    IonButton,
     IonCard,
     IonCardContent,
     IonCardHeader,
@@ -8,10 +9,20 @@ import {
     IonSegment,
     IonSegmentButton,
     IonLabel,
+    PopoverController,
 } from '@ionic/angular/standalone';
 import {addIcons} from 'ionicons';
-import {chevronDown, chevronUp, flameOutline, timeOutline, trophyOutline, calendarOutline} from 'ionicons/icons';
+import {
+    calendarOutline,
+    chevronDown,
+    chevronUp,
+    flameOutline,
+    informationCircleOutline,
+    timeOutline,
+    trophyOutline,
+} from 'ionicons/icons';
 import {Subscription} from 'rxjs';
+import {StudyHeatmapGuideComponent} from './study-heatmap-guide.component';
 import {
     addDays,
     computeStudyStats,
@@ -59,10 +70,14 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
     selector: 'app-study-heatmap',
     templateUrl: './study-heatmap.component.html',
     styleUrls: ['./study-heatmap.component.scss'],
-    imports: [IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon, IonSegment, IonSegmentButton, IonLabel],
+    imports: [
+        IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon,
+        IonSegment, IonSegmentButton, IonLabel, IonButton,
+    ],
 })
 export class StudyHeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
     private studyStats = inject(StudyStatsService);
+    private popoverCtrl = inject(PopoverController);
 
     @ViewChild('scroller') scroller: ElementRef<HTMLDivElement>;
 
@@ -82,7 +97,10 @@ export class StudyHeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
     private subscription: Subscription;
 
     constructor() {
-        addIcons({chevronDown, chevronUp, flameOutline, timeOutline, trophyOutline, calendarOutline});
+        addIcons({
+            chevronDown, chevronUp, flameOutline, timeOutline,
+            trophyOutline, calendarOutline, informationCircleOutline,
+        });
         this.stats = computeStudyStats({}, toDateKey(new Date()), toDateKey(new Date()));
     }
 
@@ -99,6 +117,15 @@ export class StudyHeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnDestroy() {
         this.subscription?.unsubscribe();
+    }
+
+    async openGuide(event: Event) {
+        event.stopPropagation();
+        const popover = await this.popoverCtrl.create({
+            component: StudyHeatmapGuideComponent,
+            event,
+        });
+        await popover.present();
     }
 
     toggleCollapse() {

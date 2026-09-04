@@ -12,7 +12,26 @@
 <ion-content class="ion-padding">
     @if (settings$ | async; as settings) {
         <section class="theme-section">
-            <h2 class="section-title">Template</h2>
+            <h2 class="section-title">Primary colour</h2>
+            <p class="section-hint">The page behind everything.</p>
+            <div class="colour-row">
+                <label class="colour-field">
+                    <span class="colour-preview" [style.background-color]="backgroundValue(settings)"></span>
+                    <span class="colour-value">{{ backgroundValue(settings) }}</span>
+                    <input type="color" [value]="backgroundValue(settings)" (input)="onBackgroundColorInput($event)"/>
+                </label>
+                @if (settings.custom.background.color) {
+                    <ion-button fill="clear" size="small" class="quiet-button" (click)="clearBackgroundColor()">
+                        Match secondary
+                    </ion-button>
+                }
+            </div>
+        </section>
+
+        <section class="theme-section">
+            <h2 class="section-title">Secondary colour</h2>
+            <p class="section-hint">Buttons, links, the toolbar, course cards and the heatmap.</p>
+
             <div class="template-grid">
                 @for (template of themeService.templates; track template.id) {
                     <button type="button" class="template-card"
@@ -23,14 +42,10 @@
                             <span class="preview-chip preview-secondary"></span>
                         </span>
                         <span class="template-name">{{ template.name }}</span>
-                        <span class="template-description">{{ template.description }}</span>
                     </button>
                 }
             </div>
-        </section>
 
-        <section class="theme-section">
-            <h2 class="section-title">Your colour</h2>
             <div class="swatch-row">
                 @for (swatch of accentSwatches; track swatch) {
                     <button type="button" class="swatch"
@@ -44,14 +59,6 @@
                     <input type="color" [value]="accentValue(settings)" (input)="onAccentInput($event)"/>
                 </label>
             </div>
-
-            <ion-segment [value]="intensityValue(settings)" (ionChange)="onIntensityChange($event)">
-                @for (option of themeService.intensityOptions; track option.value) {
-                    <ion-segment-button [value]="option.value">
-                        <ion-label>{{ option.label }}</ion-label>
-                    </ion-segment-button>
-                }
-            </ion-segment>
         </section>
 
         <section class="theme-section">
@@ -67,23 +74,13 @@
         </section>
 
         <section class="theme-section">
-            <h2 class="section-title">Background</h2>
-
-            <ion-item lines="none" class="control-item">
-                <ion-label>Page colour</ion-label>
-                <label class="color-field" slot="end">
-                    <span class="color-preview" [style.background-color]="backgroundValue(settings)"></span>
-                    <input type="color" [value]="backgroundValue(settings)" (input)="onBackgroundColorInput($event)"/>
-                </label>
-                @if (settings.custom.background.color) {
-                    <ion-button slot="end" fill="clear" size="small" (click)="clearBackgroundColor()">Reset</ion-button>
-                }
-            </ion-item>
+            <h2 class="section-title">Background picture</h2>
+            <p class="section-hint">Optional, and kept on this device only.</p>
 
             <div class="image-row">
-                <ion-button fill="outline" size="small" (click)="pickImage()">
+                <ion-button fill="outline" size="small" class="accent-button" (click)="pickImage()">
                     <ion-icon name="image-outline" slot="start"></ion-icon>
-                    {{ (backgroundImageUrl$ | async) ? 'Replace picture' : 'Upload picture' }}
+                    {{ (backgroundImageUrl$ | async) ? 'Replace' : 'Upload' }}
                 </ion-button>
                 @if (backgroundImageUrl$ | async; as imageUrl) {
                     <img class="image-preview" [src]="imageUrl" alt="Current background"/>
@@ -93,8 +90,6 @@
             <input #fileInput class="file-input" type="file" accept="image/*" (change)="onImageSelected($event)"/>
             @if (imageError) {
                 <ion-text color="danger"><p class="hint">{{ imageError }}</p></ion-text>
-            } @else {
-                <p class="hint">Pictures are kept on this device only.</p>
             }
 
             @if (backgroundImageUrl$ | async) {
@@ -122,6 +117,6 @@
             }
         </section>
 
-        <ion-button expand="block" fill="clear" color="medium" (click)="reset()">Reset custom theme</ion-button>
+        <ion-button expand="block" fill="clear" class="quiet-button" (click)="reset()">Start over</ion-button>
     }
 </ion-content>

@@ -23,7 +23,8 @@ import {
     DEFAULT_SERIES_FALLBACK,
     DEFAULT_SERIES_LABEL,
     SERIES_COUNT,
-    SERIES_LIGHTNESS,
+    SERIES_HUE_DRIFT,
+    SERIES_LIGHTNESS_RANGE,
     SERIES_SATURATION,
     TAG_SURFACE_WEIGHT,
     ACCENT_WEIGHTS,
@@ -37,7 +38,6 @@ import {
     MIN_ACCENT_ROLE_CONTRAST,
     MIN_HEATMAP_CONTRAST,
     MIN_MUTED_CONTRAST,
-    MIN_SERIES_CONTRAST,
     MUTED_TEXT_WEIGHT,
     MIN_TEXT_CONTRAST,
     ROLE_WEIGHTS,
@@ -198,37 +198,33 @@ export function buildThemeVariables(
     variables['--flick-tag-background'] = toHex(mix(tagColor, pageBackground, TAG_SURFACE_WEIGHT));
     variables['--flick-warning-text'] = toHex(readableOnSurfaces(roleColors.warning, MIN_ACCENT_CONTRAST));
 
-    // The standard modes keep the group colours the app has always used; a custom theme
-    // generates its own, spread around the accent and darkened until the label reads on them.
+    // The standard modes keep the group colours the app has always used. A custom theme
+    // colours the groups in shades of its own colour, each with a label that reads on it.
     if (derived) {
-        const seriesHue = rgbToHsl(roleColors.primary).h;
-        const seriesStep = 360 / SERIES_COUNT;
-        const seriesLabel = contrastFor(hslToRgb({
-            h: seriesHue,
-            s: SERIES_SATURATION[scheme],
-            l: SERIES_LIGHTNESS[scheme],
-        }));
+        const {h, s: saturation} = rgbToHsl(roleColors.primary);
+        const range = SERIES_LIGHTNESS_RANGE[scheme];
+        const seriesColor = (position: number) => hslToRgb({
+            h: h + (position - 0.5) * 2 * SERIES_HUE_DRIFT,
+            s: Math.max(saturation, SERIES_SATURATION[scheme]),
+            l: range.from + (range.to - range.from) * position,
+        });
         for (let index = 0; index < SERIES_COUNT; index++) {
-            const color = adjustLightnessToContrast(
-                hslToRgb({
-                    h: seriesHue + index * seriesStep,
-                    s: SERIES_SATURATION[scheme],
-                    l: SERIES_LIGHTNESS[scheme],
-                }),
-                seriesLabel,
-                MIN_SERIES_CONTRAST,
-            );
+            const color = seriesColor(index / Math.max(1, SERIES_COUNT - 1));
             variables[`--flick-series-${index}`] = toHex(color);
+            // Whichever of black or white actually reads best: a mid-tone shade needs black,
+            // where Ionic's lightness rule would still hand it white.
+            variables[`--flick-series-${index}-contrast`] = toHex(readableOn(color));
         }
-        variables['--flick-series-fallback'] = toHex(
-            adjustLightnessToContrast(roleColors.medium, seriesLabel, MIN_SERIES_CONTRAST));
-        variables['--flick-on-series'] = toHex(seriesLabel);
+        const fallback = mix(roleColors.medium, pageBackground, 0.85);
+        variables['--flick-series-fallback'] = toHex(fallback);
+        variables['--flick-series-fallback-contrast'] = toHex(readableOn(fallback));
     } else {
         DEFAULT_SERIES_COLORS.forEach((color, index) => {
             variables[`--flick-series-${index}`] = color;
+            variables[`--flick-series-${index}-contrast`] = DEFAULT_SERIES_LABEL;
         });
         variables['--flick-series-fallback'] = DEFAULT_SERIES_FALLBACK;
-        variables['--flick-on-series'] = DEFAULT_SERIES_LABEL;
+        variables['--flick-series-fallback-contrast'] = DEFAULT_SERIES_LABEL;
     }
 
     const heatAccent = adjustLightnessToContrast(roleColors.primary, pageBackground, MIN_HEATMAP_CONTRAST);

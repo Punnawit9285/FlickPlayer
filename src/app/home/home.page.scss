@@ -10,8 +10,11 @@ ion-card {
   min-height: 4rem;
 }
 
+/* Ionic gives the header and title a colour of their own, so both have to defer to the
+   card, which carries the group's readable label colour. */
+.hover-card ion-card-header,
 .hover-card ion-card-title {
-  color: var(--flick-on-series);
+  color: inherit;
 }
 
 .course-name {
@@ -159,7 +162,6 @@ p {
 
 .course-year-badge {
   flex-shrink: 0;
-  color: var(--flick-on-series);
   border-radius: 4px;
   padding: 0.05rem 0.4rem;
   font-size: 0.7rem;

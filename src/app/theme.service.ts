@@ -11,8 +11,8 @@ import {
     defaultCustomTheme,
     defaultThemeSettings,
     findTemplate,
-    INTENSITY_OPTIONS,
     NEUTRAL_SEED,
+    OWN_COLOR_INTENSITY,
     OWN_COLOR_TEMPLATE_ID,
     SCHEME_OPTIONS,
     THEME_MODES,
@@ -65,6 +65,9 @@ function sanitizeCustom(raw: unknown): CustomTheme {
         ? value.templateId
         : fallback.templateId;
     const template = findTemplate(templateId);
+    // Only a stored background speaks for the user; without one the template's own page
+    // colour applies, so opening the editor matches picking that template.
+    const storedBackground = !!value.background;
     return {
         templateId,
         seed: template ? {...template.seed} : sanitizeSeed(value.seed),
@@ -72,7 +75,7 @@ function sanitizeCustom(raw: unknown): CustomTheme {
             ? value.scheme as SchemePreference
             : fallback.scheme,
         background: {
-            color: sanitizeColor(background.color),
+            color: storedBackground ? sanitizeColor(background.color) : (template?.background ?? null),
             imageId: typeof background.imageId === 'string' ? background.imageId : null,
             imageOpacity: clamp(Number(background.imageOpacity ?? DEFAULT_BACKGROUND.imageOpacity), 0, 1),
             imageBlur: clamp(Number(background.imageBlur ?? DEFAULT_BACKGROUND.imageBlur), 0, 20),
@@ -104,7 +107,6 @@ export class ThemeService {
 
     readonly modes = THEME_MODES;
     readonly templates = THEME_TEMPLATES;
-    readonly intensityOptions = INTENSITY_OPTIONS;
     readonly schemeOptions = SCHEME_OPTIONS;
     readonly backgroundFitOptions = BACKGROUND_FIT_OPTIONS;
 
@@ -167,7 +169,11 @@ export class ThemeService {
     selectTemplate(templateId: string): void {
         const template = findTemplate(templateId);
         if (template) {
-            this.updateCustom({templateId: template.id, seed: {...template.seed}});
+            this.updateCustom({
+                templateId: template.id,
+                seed: {...template.seed},
+                background: {...this.settings.custom.background, color: template.background},
+            });
         }
     }
 
@@ -175,22 +181,16 @@ export class ThemeService {
         if (!isValidColor(accent)) {
             return;
         }
-        const custom = this.settings.custom;
-        const intensity = custom.templateId === OWN_COLOR_TEMPLATE_ID
-            ? custom.seed.intensity
-            : INTENSITY_OPTIONS[1].value;
         this.updateCustom({
             templateId: OWN_COLOR_TEMPLATE_ID,
-            seed: {accent, companion: null, tertiary: null, surfaceTint: null, intensity},
+            seed: {
+                accent,
+                companion: null,
+                tertiary: null,
+                surfaceTint: null,
+                intensity: OWN_COLOR_INTENSITY,
+            },
         });
-    }
-
-    setIntensity(intensity: number): void {
-        const custom = this.settings.custom;
-        const seed = {...custom.seed, intensity: clamp(intensity, 0, 1)};
-        this.updateCustom(custom.templateId === OWN_COLOR_TEMPLATE_ID
-            ? {seed}
-            : {templateId: OWN_COLOR_TEMPLATE_ID, seed: {...seed, accent: seed.accent ?? this.currentAccent()}});
     }
 
     setCustomScheme(scheme: SchemePreference): void {
@@ -240,10 +240,6 @@ export class ThemeService {
     /** Palette for a seed without applying it, used to preview a template in the picker. */
     preview(seed: ThemeSeed, scheme = this.scheme): CssVariables {
         return buildThemeVariables(seed, scheme, DEFAULT_BACKGROUND);
-    }
-
-    private currentAccent(): string {
-        return this.preview(this.settings.custom.seed)['--ion-color-primary'];
     }
 
     private updateCustom(change: Partial<CustomTheme>): void {

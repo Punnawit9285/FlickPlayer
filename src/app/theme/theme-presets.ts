@@ -3,7 +3,6 @@ import {
     BaseScheme,
     ColorScheme,
     CustomTheme,
-    IntensityOption,
     SchemeOption,
     SemanticRole,
     SurfaceSteps,
@@ -125,8 +124,18 @@ export const DEFAULT_SERIES_COLORS = [
 export const DEFAULT_SERIES_FALLBACK = '#808080';
 export const DEFAULT_SERIES_LABEL = '#ffffff';
 export const SERIES_COUNT = SERIES_NAMES.length;
+
+/**
+ * A custom theme colours the course groups in shades of its own colour: the lightness runs
+ * across this range while the hue drifts slightly, so the groups stay apart without
+ * introducing colours the theme never asked for.
+ */
+export const SERIES_LIGHTNESS_RANGE: Record<ColorScheme, {from: number, to: number}> = {
+    light: {from: 0.74, to: 0.26},
+    dark: {from: 0.68, to: 0.3},
+};
 export const SERIES_SATURATION: Record<ColorScheme, number> = {light: 0.55, dark: 0.5};
-export const SERIES_LIGHTNESS: Record<ColorScheme, number> = {light: 0.42, dark: 0.48};
+export const SERIES_HUE_DRIFT = 14;
 
 /** How far the informational tag is blended into the page behind it. */
 export const TAG_SURFACE_WEIGHT = 0.12;
@@ -145,8 +154,11 @@ export const THEME_MODES: ThemeModeOption[] = [
 
 export const DEFAULT_MODE = THEME_MODES[2].value;
 
-export const FACULTY_ACCENT = '#0f6b3f';
+/** Brand colours taken from the faculty's own sites. */
+export const FACULTY_ACCENT = '#1f6241';
 export const UNIVERSITY_ACCENT = '#e91e90';
+/** The soft pink page the university theme is drawn on. */
+export const UNIVERSITY_PAGE = '#fdf0f5';
 
 /** Ready-made colour templates offered inside the custom mode. */
 export const THEME_TEMPLATES: ThemeTemplate[] = [
@@ -155,24 +167,27 @@ export const THEME_TEMPLATES: ThemeTemplate[] = [
         name: 'Pink',
         description: 'The university colour.',
         seed: {accent: UNIVERSITY_ACCENT, companion: null, tertiary: null, surfaceTint: null, intensity: 1},
+        background: UNIVERSITY_PAGE,
     },
     {
         id: 'faculty',
         name: 'Green',
         description: 'The faculty colour.',
         seed: {accent: FACULTY_ACCENT, companion: null, tertiary: null, surfaceTint: null, intensity: 1},
+        background: null,
     },
     {
         id: 'faculty-university',
         name: 'Pink & Green',
-        description: 'Green on a soft pink page.',
+        description: 'Green on a pink page.',
         seed: {
             accent: FACULTY_ACCENT,
-            companion: UNIVERSITY_ACCENT,
+            companion: null,
             tertiary: null,
             surfaceTint: UNIVERSITY_ACCENT,
             intensity: 1,
         },
+        background: UNIVERSITY_PAGE,
     },
 ];
 
@@ -186,11 +201,8 @@ export const ACCENT_SWATCHES: string[] = [
     '#b45309', '#be123c', '#0369a1', '#4d7c0f', '#475569',
 ];
 
-export const INTENSITY_OPTIONS: IntensityOption[] = [
-    {value: 0.2, label: 'Subtle'},
-    {value: 0.6, label: 'Balanced'},
-    {value: 1, label: 'Bold'},
-];
+/** A colour picked in the editor tints the page as fully as a template does. */
+export const OWN_COLOR_INTENSITY = 1;
 
 export const SCHEME_OPTIONS: SchemeOption[] = [
     {value: 'light', label: 'Light', icon: 'sunny-outline'},
@@ -222,11 +234,13 @@ export const NEUTRAL_SEED = {
 };
 
 export function defaultCustomTheme(): CustomTheme {
+    const template = THEME_TEMPLATES[0];
     return {
-        templateId: DEFAULT_TEMPLATE_ID,
-        seed: {...THEME_TEMPLATES[0].seed},
-        scheme: 'system',
-        background: {...DEFAULT_BACKGROUND},
+        templateId: template.id,
+        seed: {...template.seed},
+        // A chosen colour is shown as itself rather than folded into the device's dark mode.
+        scheme: 'light',
+        background: {...DEFAULT_BACKGROUND, color: template.background},
     };
 }
 

@@ -1,0 +1,31 @@
+import {Component} from '@angular/core';
+
+/** Plain-language explanation of the heatmap, shown from the card header. */
+@Component({
+    selector: 'app-study-heatmap-guide',
+    templateUrl: './study-heatmap-guide.component.html',
+    styleUrls: ['./study-heatmap-guide.component.scss'],
+    imports: [],
+})
+export class StudyHeatmapGuideComponent {
+    title = 'Your study calendar';
+    summary = 'Every small square is one day. The more you studied that day, the stronger its colour.';
+    points = [
+        {
+            text: 'It fills itself in.',
+            detail: 'Time counts while you watch a lecture here, or while the Pomodoro timer is running.',
+        },
+        {
+            text: 'Left to right is time.',
+            detail: 'Each column is one week and this week is on the right, so recent weeks are nearest the end.',
+        },
+        {
+            text: 'A streak is days in a row.',
+            detail: 'Study today to keep it going. Missing today only breaks it once the day is over.',
+        },
+        {
+            text: 'Point at a square for the detail.',
+            detail: 'It shows the date and how long you studied.',
+        },
+    ];
+}

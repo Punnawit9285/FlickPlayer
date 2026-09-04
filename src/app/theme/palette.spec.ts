@@ -1,4 +1,4 @@
-import {contrastRatio, parseColor} from './color';
+import {contrastRatio, parseColor, rgbToHsl} from './color';
 import {buildThemeVariables} from './palette';
 import {
     BASE_SCHEMES,
@@ -9,6 +9,7 @@ import {
     MIN_TEXT_CONTRAST,
     NEUTRAL_SEED,
     SERIES_COUNT,
+    SERIES_HUE_DRIFT,
     THEME_TEMPLATES,
 } from './theme-presets';
 import {ColorScheme, SEMANTIC_ROLES, ThemeSeed} from './theme.model';
@@ -83,13 +84,22 @@ describe('buildThemeVariables', () => {
         for (const template of THEME_TEMPLATES) {
             for (const scheme of SCHEMES) {
                 const variables = build(template.seed, scheme);
-                for (let index = 0; index < SERIES_COUNT; index++) {
-                    expect(ratio(variables[`--flick-series-${index}`], variables['--flick-on-series']))
-                        .toBeGreaterThanOrEqual(MIN_SERIES_CONTRAST - 0.01);
+                for (const key of [...Array(SERIES_COUNT).keys()].map(String).concat('fallback')) {
+                    expect(ratio(variables[`--flick-series-${key}`], variables[`--flick-series-${key}-contrast`]))
+                        .toBeGreaterThanOrEqual(MIN_SERIES_CONTRAST);
                 }
-                expect(ratio(variables['--flick-series-fallback'], variables['--flick-on-series']))
-                    .toBeGreaterThanOrEqual(MIN_SERIES_CONTRAST - 0.01);
             }
+        }
+    });
+
+    it('should keep the course colours of a custom theme in shades of its own colour', () => {
+        const variables = build(THEME_TEMPLATES[0].seed, 'light');
+        const hues = [...Array(SERIES_COUNT).keys()]
+            .map(index => rgbToHsl(parseColor(variables[`--flick-series-${index}`])).h);
+        const accentHue = rgbToHsl(parseColor(variables['--ion-color-primary'])).h;
+        for (const hue of hues) {
+            const distance = Math.min(Math.abs(hue - accentHue), 360 - Math.abs(hue - accentHue));
+            expect(distance).toBeLessThanOrEqual(SERIES_HUE_DRIFT + 1);
         }
     });
 
