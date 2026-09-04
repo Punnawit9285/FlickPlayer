@@ -34,36 +34,47 @@
             </div>
 
             <div class="calendar-wrapper">
-                <div class="calendar">
-                    <div class="weekday-column">
-                        @for (day of weekdayLabels; track $index) {
-                            <span class="weekday-label">{{ day }}</span>
-                        }
-                    </div>
-                    <div class="calendar-scroll" #scroller>
-                        <div class="weeks">
-                            <div class="month-row">
-                                @for (week of weeks; track week.key) {
-                                    <span class="month-label">{{ week.monthLabel }}</span>
-                                }
-                            </div>
-                            <div class="week-row">
-                                @for (week of weeks; track week.key) {
-                                    <div class="week">
-                                        @for (cell of week.days; track cell.key) {
-                                            <div class="cell"
-                                                 [class.out-of-range]="!cell.inRange"
-                                                 [attr.data-level]="cell.level"
-                                                 [attr.aria-label]="cell.inRange ? cell.label : null"
-                                                 (mouseenter)="showTooltip(cell, $event)"
-                                                 (mouseleave)="hideTooltip()"></div>
-                                        }
-                                    </div>
-                                }
+                <div class="calendar-area">
+                    <div class="calendar">
+                        <div class="weekday-column">
+                            @for (day of weekdayLabels; track $index) {
+                                <span class="weekday-label">{{ day }}</span>
+                            }
+                        </div>
+                        <div class="calendar-scroll" #scroller>
+                            <div class="weeks">
+                                <div class="month-row">
+                                    @for (week of weeks; track week.key) {
+                                        <span class="month-label">{{ week.monthLabel }}</span>
+                                    }
+                                </div>
+                                <div class="week-row">
+                                    @for (week of weeks; track week.key) {
+                                        <div class="week">
+                                            @for (cell of week.days; track cell.key) {
+                                                <div class="cell"
+                                                     [class.out-of-range]="!cell.inRange"
+                                                     [attr.data-level]="cell.level"
+                                                     [attr.aria-label]="cell.inRange ? cell.label : null"
+                                                     (mouseenter)="showTooltip(cell, $event)"
+                                                     (mouseleave)="hideTooltip()"></div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <div class="legend">
+                        Less
+                        @for (level of legendLevels; track level) {
+                            <span class="cell" [attr.data-level]="level"></span>
+                        }
+                        More
+                    </div>
                 </div>
+
                 @if (tooltip) {
                     <div class="cell-tooltip" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
                         {{ tooltip.text }}
@@ -71,16 +82,9 @@
                 }
             </div>
 
-            <div class="legend">
-                <span class="legend-hint">{{ emptyHint }}</span>
-                <span class="legend-scale">
-                    Less
-                    @for (level of legendLevels; track level) {
-                        <span class="cell" [attr.data-level]="level"></span>
-                    }
-                    More
-                </span>
-            </div>
+            @if (emptyHint) {
+                <p class="empty-hint">{{ emptyHint }}</p>
+            }
         </ion-card-content>
     }
 </ion-card>

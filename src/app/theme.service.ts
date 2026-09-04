@@ -1,27 +1,32 @@
 import {DestroyRef, inject, Injectable} from '@angular/core';
 import {BehaviorSubject, Observable} from 'rxjs';
 import {distinctUntilChanged, map} from 'rxjs/operators';
-import {doc, Firestore, onSnapshot, setDoc, Unsubscribe} from '@angular/fire/firestore';
 import {ulid} from 'ulid';
 import {AuthService} from './auth.service';
 import {isValidColor} from './theme/color';
 import {buildThemeVariables, CssVariables} from './theme/palette';
 import {
     BACKGROUND_FIT_OPTIONS,
-    CUSTOM_PRESET_ID,
     DEFAULT_BACKGROUND,
-    DEFAULT_PRESET_ID,
+    defaultCustomTheme,
     defaultThemeSettings,
-    findPreset,
+    findTemplate,
     INTENSITY_OPTIONS,
+    NEUTRAL_SEED,
+    OWN_COLOR_TEMPLATE_ID,
     SCHEME_OPTIONS,
-    THEME_PRESETS,
+    THEME_MODES,
+    THEME_TEMPLATES,
 } from './theme/theme-presets';
 import {BackgroundImageStore, prepareBackgroundImage} from './theme/background-store';
 import {
     BackgroundFit,
     ColorScheme,
+    CustomTheme,
     SchemePreference,
+    ThemeBackground,
+    ThemeMode,
+    ThemeModeOption,
     ThemeSeed,
     ThemeSettings,
 } from './theme/theme.model';
@@ -29,10 +34,7 @@ import {
 /** Mirrors the last applied palette so index.html can paint it before Angular boots. */
 export const APPLIED_THEME_KEY = 'flickThemeApplied';
 export const THEME_STORAGE_KEY_PREFIX = 'flickTheme_';
-export const THEME_SYNC_COLLECTION = 'userThemes';
 export const BACKGROUND_IMAGE_CLASS = 'flick-has-background-image';
-/** Settings changes are collected for this long before one write goes to the server. */
-export const REMOTE_SYNC_DEBOUNCE_MS = 1500;
 const GUEST_ID = 'guest';
 
 function clamp(value: number, min: number, max: number): number {
@@ -54,34 +56,42 @@ function sanitizeSeed(raw: unknown): ThemeSeed {
     };
 }
 
-/** Accept only values this build understands, so stored or synced data can never break rendering. */
-export function sanitizeSettings(raw: unknown): ThemeSettings {
-    const fallback = defaultThemeSettings();
-    const value = (raw ?? {}) as Partial<ThemeSettings>;
-    const background = (value.background ?? {}) as Partial<ThemeSettings['background']>;
-    const presetId = typeof value.presetId === 'string'
-        && (value.presetId === CUSTOM_PRESET_ID || !!findPreset(value.presetId))
-        ? value.presetId
-        : fallback.presetId;
-    const scheme = SCHEME_OPTIONS.some(option => option.value === value.scheme)
-        ? value.scheme as SchemePreference
-        : fallback.scheme;
-    const imageFit = BACKGROUND_FIT_OPTIONS.some(option => option.value === background.imageFit)
-        ? background.imageFit as BackgroundFit
-        : DEFAULT_BACKGROUND.imageFit;
-    const preset = findPreset(presetId);
-
+function sanitizeCustom(raw: unknown): CustomTheme {
+    const fallback = defaultCustomTheme();
+    const value = (raw ?? {}) as Partial<CustomTheme>;
+    const background = (value.background ?? {}) as Partial<ThemeBackground>;
+    const templateId = typeof value.templateId === 'string'
+        && (value.templateId === OWN_COLOR_TEMPLATE_ID || !!findTemplate(value.templateId))
+        ? value.templateId
+        : fallback.templateId;
+    const template = findTemplate(templateId);
     return {
-        presetId,
-        seed: presetId === CUSTOM_PRESET_ID ? sanitizeSeed(value.seed) : {...preset.seed},
-        scheme,
+        templateId,
+        seed: template ? {...template.seed} : sanitizeSeed(value.seed),
+        scheme: SCHEME_OPTIONS.some(option => option.value === value.scheme)
+            ? value.scheme as SchemePreference
+            : fallback.scheme,
         background: {
             color: sanitizeColor(background.color),
             imageId: typeof background.imageId === 'string' ? background.imageId : null,
             imageOpacity: clamp(Number(background.imageOpacity ?? DEFAULT_BACKGROUND.imageOpacity), 0, 1),
             imageBlur: clamp(Number(background.imageBlur ?? DEFAULT_BACKGROUND.imageBlur), 0, 20),
-            imageFit,
+            imageFit: BACKGROUND_FIT_OPTIONS.some(option => option.value === background.imageFit)
+                ? background.imageFit as BackgroundFit
+                : DEFAULT_BACKGROUND.imageFit,
         },
+    };
+}
+
+/** Accept only values this build understands, so stored data can never break rendering. */
+export function sanitizeSettings(raw: unknown): ThemeSettings {
+    const fallback = defaultThemeSettings();
+    const value = (raw ?? {}) as Partial<ThemeSettings>;
+    return {
+        mode: THEME_MODES.some(option => option.value === value.mode)
+            ? value.mode as ThemeMode
+            : fallback.mode,
+        custom: sanitizeCustom(value.custom),
         updatedAt: Number(value.updatedAt) || 0,
     };
 }
@@ -90,10 +100,10 @@ export function sanitizeSettings(raw: unknown): ThemeSettings {
     providedIn: 'root',
 })
 export class ThemeService {
-    private firestore = inject(Firestore);
     private imageStore = new BackgroundImageStore();
 
-    readonly presets = THEME_PRESETS;
+    readonly modes = THEME_MODES;
+    readonly templates = THEME_TEMPLATES;
     readonly intensityOptions = INTENSITY_OPTIONS;
     readonly schemeOptions = SCHEME_OPTIONS;
     readonly backgroundFitOptions = BACKGROUND_FIT_OPTIONS;
@@ -105,31 +115,25 @@ export class ThemeService {
     readonly settings$: Observable<ThemeSettings> = this.settingsSubject.asObservable();
     readonly scheme$: Observable<ColorScheme> = this.schemeSubject.asObservable();
     readonly backgroundImageUrl$: Observable<string | null> = this.imageUrlSubject.asObservable();
-    readonly presetId$: Observable<string> = this.settings$.pipe(
-        map(settings => settings.presetId),
+    readonly mode$: Observable<ThemeMode> = this.settings$.pipe(
+        map(settings => settings.mode),
         distinctUntilChanged(),
+    );
+    readonly modeOption$: Observable<ThemeModeOption> = this.mode$.pipe(
+        map(mode => this.modes.find(option => option.value === mode) ?? this.modes[0]),
     );
 
     private userId = GUEST_ID;
     private objectUrl: string | null = null;
-    private remoteSubscription: Unsubscribe | null = null;
     private darkQuery: MediaQueryList | null = null;
-    private remoteTimer: ReturnType<typeof setTimeout> | null = null;
-    private pendingRemote: ThemeSettings | null = null;
-    private lastRemotePayload = '';
 
     constructor() {
         const destroyRef = inject(DestroyRef);
         this.darkQuery = window.matchMedia?.('(prefers-color-scheme: dark)') ?? null;
         const onSystemChange = () => this.apply(this.settingsSubject.value, false);
         this.darkQuery?.addEventListener('change', onSystemChange);
-        const flush = () => this.flushRemote();
-        window.addEventListener('pagehide', flush);
         destroyRef.onDestroy(() => {
             this.darkQuery?.removeEventListener('change', onSystemChange);
-            window.removeEventListener('pagehide', flush);
-            this.flushRemote();
-            this.stopRemoteSync();
             this.releaseObjectUrl();
         });
 
@@ -152,10 +156,18 @@ export class ThemeService {
         return this.schemeSubject.value;
     }
 
-    selectPreset(presetId: string): void {
-        const preset = findPreset(presetId);
-        if (preset) {
-            this.update({presetId: preset.id, seed: {...preset.seed}});
+    get mode(): ThemeMode {
+        return this.settings.mode;
+    }
+
+    setMode(mode: ThemeMode): void {
+        this.update({mode});
+    }
+
+    selectTemplate(templateId: string): void {
+        const template = findTemplate(templateId);
+        if (template) {
+            this.updateCustom({templateId: template.id, seed: {...template.seed}});
         }
     }
 
@@ -163,45 +175,45 @@ export class ThemeService {
         if (!isValidColor(accent)) {
             return;
         }
-        const current = this.settings;
-        const intensity = current.presetId === CUSTOM_PRESET_ID
-            ? current.seed.intensity
+        const custom = this.settings.custom;
+        const intensity = custom.templateId === OWN_COLOR_TEMPLATE_ID
+            ? custom.seed.intensity
             : INTENSITY_OPTIONS[1].value;
-        this.update({
-            presetId: CUSTOM_PRESET_ID,
+        this.updateCustom({
+            templateId: OWN_COLOR_TEMPLATE_ID,
             seed: {accent, companion: null, tertiary: null, surfaceTint: null, intensity},
         });
     }
 
     setIntensity(intensity: number): void {
-        const current = this.settings;
-        const seed = {...current.seed, intensity: clamp(intensity, 0, 1)};
-        this.update(current.presetId === CUSTOM_PRESET_ID
+        const custom = this.settings.custom;
+        const seed = {...custom.seed, intensity: clamp(intensity, 0, 1)};
+        this.updateCustom(custom.templateId === OWN_COLOR_TEMPLATE_ID
             ? {seed}
-            : {presetId: CUSTOM_PRESET_ID, seed: {...seed, accent: seed.accent ?? this.resolvedAccent()}});
+            : {templateId: OWN_COLOR_TEMPLATE_ID, seed: {...seed, accent: seed.accent ?? this.currentAccent()}});
     }
 
-    setScheme(scheme: SchemePreference): void {
-        this.update({scheme});
+    setCustomScheme(scheme: SchemePreference): void {
+        this.updateCustom({scheme});
     }
 
     setBackgroundColor(color: string | null): void {
         if (color !== null && !isValidColor(color)) {
             return;
         }
-        this.update({background: {...this.settings.background, color}});
+        this.updateCustom({background: {...this.settings.custom.background, color}});
     }
 
     setBackgroundFit(imageFit: BackgroundFit): void {
-        this.update({background: {...this.settings.background, imageFit}});
+        this.updateCustom({background: {...this.settings.custom.background, imageFit}});
     }
 
     setBackgroundOpacity(imageOpacity: number): void {
-        this.update({background: {...this.settings.background, imageOpacity: clamp(imageOpacity, 0, 1)}});
+        this.updateCustom({background: {...this.settings.custom.background, imageOpacity: clamp(imageOpacity, 0, 1)}});
     }
 
     setBackgroundBlur(imageBlur: number): void {
-        this.update({background: {...this.settings.background, imageBlur: clamp(imageBlur, 0, 20)}});
+        this.updateCustom({background: {...this.settings.custom.background, imageBlur: clamp(imageBlur, 0, 20)}});
     }
 
     /** Store an uploaded picture on this device and use it as the page background. */
@@ -210,44 +222,57 @@ export class ThemeService {
         const imageId = ulid();
         await this.imageStore.save(imageId, image);
         await this.imageStore.prune(imageId);
-        this.update({background: {...this.settings.background, imageId}});
+        this.updateCustom({background: {...this.settings.custom.background, imageId}});
     }
 
     async clearBackgroundImage(): Promise<void> {
-        const {imageId} = this.settings.background;
+        const {imageId} = this.settings.custom.background;
         if (imageId) {
             await this.imageStore.remove(imageId);
         }
-        this.update({background: {...this.settings.background, imageId: null}});
+        this.updateCustom({background: {...this.settings.custom.background, imageId: null}});
     }
 
-    reset(): void {
-        const defaults = defaultThemeSettings();
-        this.update({
-            presetId: defaults.presetId,
-            seed: {...defaults.seed},
-            scheme: defaults.scheme,
-            background: {...defaults.background},
-        });
+    resetCustom(): void {
+        this.update({custom: defaultCustomTheme()});
     }
 
-    /** Palette for a seed without applying it, used to preview a theme in the picker. */
-    preview(seed: ThemeSeed): CssVariables {
-        return buildThemeVariables(seed, this.scheme, DEFAULT_BACKGROUND);
+    /** Palette for a seed without applying it, used to preview a template in the picker. */
+    preview(seed: ThemeSeed, scheme = this.scheme): CssVariables {
+        return buildThemeVariables(seed, scheme, DEFAULT_BACKGROUND);
     }
 
-    private resolvedAccent(): string {
-        return this.preview(this.settings.seed)['--ion-color-primary'];
+    private currentAccent(): string {
+        return this.preview(this.settings.custom.seed)['--ion-color-primary'];
+    }
+
+    private updateCustom(change: Partial<CustomTheme>): void {
+        this.update({mode: 'custom', custom: {...this.settings.custom, ...change}});
     }
 
     private update(change: Partial<ThemeSettings>): void {
-        const next: ThemeSettings = {...this.settings, ...change, updatedAt: Date.now()};
-        this.apply(next, true);
+        this.apply({...this.settings, ...change, updatedAt: Date.now()}, true);
+    }
+
+    /** The standard modes deliberately carry no colour, picture or background of their own. */
+    private resolve(settings: ThemeSettings): {scheme: ColorScheme, seed: ThemeSeed, background: ThemeBackground} {
+        if (settings.mode === 'custom') {
+            return {
+                scheme: this.resolveScheme(settings.custom.scheme),
+                seed: settings.custom.seed,
+                background: settings.custom.background,
+            };
+        }
+        return {
+            scheme: this.resolveScheme(settings.mode),
+            seed: {...NEUTRAL_SEED},
+            background: {...DEFAULT_BACKGROUND},
+        };
     }
 
     private apply(settings: ThemeSettings, persist: boolean): void {
-        const scheme = this.resolveScheme(settings.scheme);
-        const variables = buildThemeVariables(settings.seed, scheme, settings.background);
+        const {scheme, seed, background} = this.resolve(settings);
+        const variables = buildThemeVariables(seed, scheme, background);
 
         const root = document.documentElement;
         root.setAttribute('data-theme', scheme);
@@ -259,11 +284,10 @@ export class ThemeService {
         this.schemeSubject.next(scheme);
         this.settingsSubject.next(settings);
         this.writeAppliedMirror(scheme, variables);
-        void this.applyBackgroundImage(settings.background.imageId);
+        void this.applyBackgroundImage(background.imageId);
 
         if (persist) {
             this.writeLocal(settings);
-            this.writeRemote(settings);
         }
     }
 
@@ -272,6 +296,14 @@ export class ThemeService {
             return this.darkQuery?.matches ? 'dark' : 'light';
         }
         return preference;
+    }
+
+    /** Keep the browser chrome (address bar, task switcher) in step with the theme. */
+    private updateBrowserThemeColor(color: string): void {
+        const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+        if (meta) {
+            meta.content = color;
+        }
     }
 
     private async applyBackgroundImage(imageId: string | null): Promise<void> {
@@ -284,14 +316,6 @@ export class ThemeService {
         root.style.setProperty('--flick-background-image', this.objectUrl ? `url("${this.objectUrl}")` : 'none');
         document.body.classList.toggle(BACKGROUND_IMAGE_CLASS, !!this.objectUrl);
         this.imageUrlSubject.next(this.objectUrl);
-    }
-
-    /** Keep the browser chrome (address bar, task switcher) in step with the theme. */
-    private updateBrowserThemeColor(color: string): void {
-        const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-        if (meta) {
-            meta.content = color;
-        }
     }
 
     private releaseObjectUrl(): void {
@@ -309,92 +333,17 @@ export class ThemeService {
         this.userId = uid;
         const stored = this.readLocal(uid);
         const adoptGuest = guestSettings && guestSettings.updatedAt > stored.updatedAt;
-        const settings = adoptGuest ? guestSettings : stored;
-        this.apply(settings, adoptGuest);
-        this.startRemoteSync(uid);
+        this.apply(adoptGuest ? guestSettings : stored, adoptGuest);
     }
 
     private detachUser(): void {
-        this.stopRemoteSync();
         this.userId = GUEST_ID;
         this.apply(this.readLocal(GUEST_ID), false);
     }
 
-    private startRemoteSync(uid: string): void {
-        this.stopRemoteSync();
-        try {
-            this.remoteSubscription = onSnapshot(
-                doc(this.firestore, THEME_SYNC_COLLECTION, uid),
-                snapshot => {
-                    const remote = snapshot.data();
-                    if (!remote) {
-                        return;
-                    }
-                    const settings = sanitizeSettings(remote);
-                    if (settings.updatedAt > this.settings.updatedAt) {
-                        this.lastRemotePayload = JSON.stringify(settings);
-                        this.apply(settings, false);
-                        this.writeLocal(settings);
-                    }
-                },
-                () => this.stopRemoteSync(),
-            );
-        } catch {
-            this.remoteSubscription = null;
-        }
-    }
-
-    private stopRemoteSync(): void {
-        this.remoteSubscription?.();
-        this.remoteSubscription = null;
-        if (this.remoteTimer) {
-            clearTimeout(this.remoteTimer);
-            this.remoteTimer = null;
-        }
-        this.pendingRemote = null;
-    }
-
-    /**
-     * Dragging a slider changes the theme many times a second. Only the settled value is sent,
-     * so a whole adjustment costs one small write instead of one per frame.
-     */
-    private writeRemote(settings: ThemeSettings): void {
-        if (this.userId === GUEST_ID) {
-            return;
-        }
-        this.pendingRemote = settings;
-        if (this.remoteTimer) {
-            clearTimeout(this.remoteTimer);
-        }
-        this.remoteTimer = setTimeout(() => this.flushRemote(), REMOTE_SYNC_DEBOUNCE_MS);
-    }
-
-    private flushRemote(): void {
-        if (this.remoteTimer) {
-            clearTimeout(this.remoteTimer);
-            this.remoteTimer = null;
-        }
-        const settings = this.pendingRemote;
-        this.pendingRemote = null;
-        if (!settings || this.userId === GUEST_ID) {
-            return;
-        }
-        const payload = JSON.stringify(settings);
-        if (payload === this.lastRemotePayload) {
-            return;
-        }
-        this.lastRemotePayload = payload;
-        setDoc(doc(this.firestore, THEME_SYNC_COLLECTION, this.userId), settings, {merge: true})
-            .catch(() => this.stopRemoteSync());
-    }
-
-    private storageKey(uid: string): string {
-        return THEME_STORAGE_KEY_PREFIX + uid;
-    }
-
     private readLocal(uid: string): ThemeSettings {
         try {
-            const raw = localStorage.getItem(this.storageKey(uid));
+            const raw = localStorage.getItem(THEME_STORAGE_KEY_PREFIX + uid);
             return sanitizeSettings(raw ? JSON.parse(raw) : null);
         } catch {
             return defaultThemeSettings();
@@ -403,7 +352,7 @@ export class ThemeService {
 
     private writeLocal(settings: ThemeSettings): void {
         try {
-            localStorage.setItem(this.storageKey(this.userId), JSON.stringify(settings));
+            localStorage.setItem(THEME_STORAGE_KEY_PREFIX + this.userId, JSON.stringify(settings));
         } catch {
             // Storage may be unavailable; the theme still applies for this session.
         }
@@ -418,4 +367,4 @@ export class ThemeService {
     }
 }
 
-export {DEFAULT_PRESET_ID, CUSTOM_PRESET_ID};
+export {OWN_COLOR_TEMPLATE_ID};

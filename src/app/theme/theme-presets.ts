@@ -1,19 +1,21 @@
 import {
     BackgroundFitOption,
     BaseScheme,
-    SurfaceSteps,
     ColorScheme,
+    CustomTheme,
     IntensityOption,
     SchemeOption,
     SemanticRole,
+    SurfaceSteps,
     ThemeBackground,
-    ThemePreset,
+    ThemeModeOption,
     ThemeSettings,
+    ThemeTemplate,
 } from './theme.model';
 
 /**
- * Neutral starting palettes. With intensity 0 a theme renders exactly these,
- * which keeps the default appearance identical to the untouched app.
+ * Neutral starting palettes. Light, dark and system render exactly these, which keeps the
+ * standard modes identical to the app as it shipped.
  */
 export const BASE_SCHEMES: Record<ColorScheme, BaseScheme> = {
     light: {
@@ -111,8 +113,18 @@ export const COLOR_STEPS = [
     50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950,
 ];
 
-/** Distinct colours generated for labelled groups such as course years. */
-export const SERIES_COUNT = 8;
+/** Course groups that carry a colour of their own, and the colours the app has always used. */
+export const SERIES_NAMES = [
+    '1st year', '2nd year', '3rd year', '4th year', '5th year', '6th year', 'NLE1', 'NLE2',
+];
+
+export const DEFAULT_SERIES_COLORS = [
+    '#00BCD4', '#FF9800', '#795548', '#9C27B0', '#4CAF50', '#E91E63', '#607D8B', '#FDD835',
+];
+
+export const DEFAULT_SERIES_FALLBACK = '#808080';
+export const DEFAULT_SERIES_LABEL = '#ffffff';
+export const SERIES_COUNT = SERIES_NAMES.length;
 export const SERIES_SATURATION: Record<ColorScheme, number> = {light: 0.55, dark: 0.5};
 export const SERIES_LIGHTNESS: Record<ColorScheme, number> = {light: 0.42, dark: 0.48};
 
@@ -124,31 +136,35 @@ export const HEATMAP_EMPTY_WEIGHT = 0.08;
 /** Contrast the heatmap's strongest level keeps against the page, so it stays visible. */
 export const MIN_HEATMAP_CONTRAST = 2.5;
 
+export const THEME_MODES: ThemeModeOption[] = [
+    {value: 'light', label: 'Light', description: 'Always light.', icon: 'sunny-outline'},
+    {value: 'dark', label: 'Dark', description: 'Always dark.', icon: 'moon-outline'},
+    {value: 'system', label: 'System', description: 'Follow your device.', icon: 'phone-portrait-outline'},
+    {value: 'custom', label: 'Custom', description: 'Your own colours.', icon: 'color-palette-outline'},
+];
+
+export const DEFAULT_MODE = THEME_MODES[2].value;
+
 export const FACULTY_ACCENT = '#0f6b3f';
 export const UNIVERSITY_ACCENT = '#e91e90';
 
-export const THEME_PRESETS: ThemePreset[] = [
-    {
-        id: 'default',
-        name: 'Default',
-        description: 'The standard look, in light or dark.',
-        seed: {accent: null, companion: null, tertiary: null, surfaceTint: null, intensity: 0},
-    },
-    {
-        id: 'faculty',
-        name: 'Faculty',
-        description: 'Deep green drawn from the faculty colour.',
-        seed: {accent: FACULTY_ACCENT, companion: null, tertiary: null, surfaceTint: null, intensity: 1},
-    },
+/** Ready-made colour templates offered inside the custom mode. */
+export const THEME_TEMPLATES: ThemeTemplate[] = [
     {
         id: 'university',
-        name: 'University',
-        description: 'The university pink.',
+        name: 'Pink',
+        description: 'The university colour.',
         seed: {accent: UNIVERSITY_ACCENT, companion: null, tertiary: null, surfaceTint: null, intensity: 1},
     },
     {
+        id: 'faculty',
+        name: 'Green',
+        description: 'The faculty colour.',
+        seed: {accent: FACULTY_ACCENT, companion: null, tertiary: null, surfaceTint: null, intensity: 1},
+    },
+    {
         id: 'faculty-university',
-        name: 'Faculty & University',
+        name: 'Pink & Green',
         description: 'Green on a soft pink page.',
         seed: {
             accent: FACULTY_ACCENT,
@@ -160,10 +176,11 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
 ];
 
-export const CUSTOM_PRESET_ID = 'custom';
-export const DEFAULT_PRESET_ID = THEME_PRESETS[0].id;
+/** Used when the colour comes from the picker rather than a template. */
+export const OWN_COLOR_TEMPLATE_ID = 'own';
+export const DEFAULT_TEMPLATE_ID = THEME_TEMPLATES[0].id;
 
-/** Curated accents for the custom picker, chosen to stay legible at any intensity. */
+/** Curated accents for the picker, chosen to stay legible at any intensity. */
 export const ACCENT_SWATCHES: string[] = [
     '#3880ff', '#0f6b3f', '#e91e90', '#0f766e', '#7c3aed',
     '#b45309', '#be123c', '#0369a1', '#4d7c0f', '#475569',
@@ -195,16 +212,36 @@ export const DEFAULT_BACKGROUND: ThemeBackground = {
     imageFit: 'cover',
 };
 
-export function defaultThemeSettings(): ThemeSettings {
+/** The seed the standard modes use: no accent, so the base palette renders untouched. */
+export const NEUTRAL_SEED = {
+    accent: null,
+    companion: null,
+    tertiary: null,
+    surfaceTint: null,
+    intensity: 0,
+};
+
+export function defaultCustomTheme(): CustomTheme {
     return {
-        presetId: DEFAULT_PRESET_ID,
-        seed: {...THEME_PRESETS[0].seed},
+        templateId: DEFAULT_TEMPLATE_ID,
+        seed: {...THEME_TEMPLATES[0].seed},
         scheme: 'system',
         background: {...DEFAULT_BACKGROUND},
+    };
+}
+
+export function defaultThemeSettings(): ThemeSettings {
+    return {
+        mode: DEFAULT_MODE,
+        custom: defaultCustomTheme(),
         updatedAt: 0,
     };
 }
 
-export function findPreset(id: string): ThemePreset | undefined {
-    return THEME_PRESETS.find(preset => preset.id === id);
+export function findTemplate(id: string): ThemeTemplate | undefined {
+    return THEME_TEMPLATES.find(template => template.id === id);
+}
+
+export function seriesIndexOf(name: string): number {
+    return SERIES_NAMES.indexOf(name);
 }

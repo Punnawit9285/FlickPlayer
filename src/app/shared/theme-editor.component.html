@@ -1,6 +1,6 @@
 <ion-header>
     <ion-toolbar>
-        <ion-title>Appearance</ion-title>
+        <ion-title>Custom theme</ion-title>
         <ion-buttons slot="end">
             <ion-button (click)="close()" aria-label="Close">
                 <ion-icon name="close" slot="icon-only"></ion-icon>
@@ -12,30 +12,18 @@
 <ion-content class="ion-padding">
     @if (settings$ | async; as settings) {
         <section class="theme-section">
-            <h2 class="section-title">Mode</h2>
-            <ion-segment [value]="settings.scheme" (ionChange)="onSchemeChange($event)">
-                @for (option of themeService.schemeOptions; track option.value) {
-                    <ion-segment-button [value]="option.value">
-                        <ion-icon [name]="option.icon"></ion-icon>
-                        <ion-label>{{ option.label }}</ion-label>
-                    </ion-segment-button>
-                }
-            </ion-segment>
-        </section>
-
-        <section class="theme-section">
-            <h2 class="section-title">Theme</h2>
-            <div class="preset-grid">
-                @for (preset of themeService.presets; track preset.id) {
-                    <button type="button" class="preset-card"
-                            [class.selected]="preset.id === settings.presetId"
-                            (click)="selectPreset(preset.id)">
-                        <span class="preset-preview" [style]="previewStyle(preset.id)">
+            <h2 class="section-title">Template</h2>
+            <div class="template-grid">
+                @for (template of themeService.templates; track template.id) {
+                    <button type="button" class="template-card"
+                            [class.selected]="template.id === settings.custom.templateId"
+                            (click)="selectTemplate(template.id)">
+                        <span class="template-preview" [style]="previewStyle(template.id)">
                             <span class="preview-chip preview-primary"></span>
                             <span class="preview-chip preview-secondary"></span>
                         </span>
-                        <span class="preset-name">{{ preset.name }}</span>
-                        <span class="preset-description">{{ preset.description }}</span>
+                        <span class="template-name">{{ template.name }}</span>
+                        <span class="template-description">{{ template.description }}</span>
                     </button>
                 }
             </div>
@@ -51,7 +39,7 @@
                             [attr.aria-label]="'Use colour ' + swatch"
                             (click)="selectAccent(swatch)"></button>
                 }
-                <label class="swatch swatch-picker" [attr.aria-label]="'Pick any colour'">
+                <label class="swatch swatch-picker" aria-label="Pick any colour">
                     <ion-icon name="color-palette-outline"></ion-icon>
                     <input type="color" [value]="accentValue(settings)" (input)="onAccentInput($event)"/>
                 </label>
@@ -67,6 +55,18 @@
         </section>
 
         <section class="theme-section">
+            <h2 class="section-title">Light or dark</h2>
+            <ion-segment [value]="settings.custom.scheme" (ionChange)="onSchemeChange($event)">
+                @for (option of themeService.schemeOptions; track option.value) {
+                    <ion-segment-button [value]="option.value">
+                        <ion-icon [name]="option.icon"></ion-icon>
+                        <ion-label>{{ option.label }}</ion-label>
+                    </ion-segment-button>
+                }
+            </ion-segment>
+        </section>
+
+        <section class="theme-section">
             <h2 class="section-title">Background</h2>
 
             <ion-item lines="none" class="control-item">
@@ -75,7 +75,7 @@
                     <span class="color-preview" [style.background-color]="backgroundValue(settings)"></span>
                     <input type="color" [value]="backgroundValue(settings)" (input)="onBackgroundColorInput($event)"/>
                 </label>
-                @if (settings.background.color) {
+                @if (settings.custom.background.color) {
                     <ion-button slot="end" fill="clear" size="small" (click)="clearBackgroundColor()">Reset</ion-button>
                 }
             </ion-item>
@@ -94,11 +94,11 @@
             @if (imageError) {
                 <ion-text color="danger"><p class="hint">{{ imageError }}</p></ion-text>
             } @else {
-                <p class="hint">Pictures stay on this device. Colours and layout follow you everywhere.</p>
+                <p class="hint">Pictures are kept on this device only.</p>
             }
 
             @if (backgroundImageUrl$ | async) {
-                <ion-segment [value]="settings.background.imageFit" (ionChange)="onFitChange($event)">
+                <ion-segment [value]="settings.custom.background.imageFit" (ionChange)="onFitChange($event)">
                     @for (option of themeService.backgroundFitOptions; track option.value) {
                         <ion-segment-button [value]="option.value">
                             <ion-label>{{ option.label }}</ion-label>
@@ -109,19 +109,19 @@
                 <ion-item lines="none" class="control-item">
                     <ion-label>Visibility</ion-label>
                     <ion-range slot="end" class="control-range" [min]="0" [max]="1" [step]="0.05"
-                               [value]="settings.background.imageOpacity"
+                               [value]="settings.custom.background.imageOpacity"
                                (ionInput)="onOpacityChange($event)"></ion-range>
                 </ion-item>
 
                 <ion-item lines="none" class="control-item">
                     <ion-label>Blur</ion-label>
                     <ion-range slot="end" class="control-range" [min]="0" [max]="20" [step]="1"
-                               [value]="settings.background.imageBlur"
+                               [value]="settings.custom.background.imageBlur"
                                (ionInput)="onBlurChange($event)"></ion-range>
                 </ion-item>
             }
         </section>
 
-        <ion-button expand="block" fill="clear" color="medium" (click)="reset()">Reset to default</ion-button>
+        <ion-button expand="block" fill="clear" color="medium" (click)="reset()">Reset custom theme</ion-button>
     }
 </ion-content>

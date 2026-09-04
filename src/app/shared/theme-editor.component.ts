@@ -18,8 +18,8 @@ import {
 } from '@ionic/angular/standalone';
 import {addIcons} from 'ionicons';
 import {close, colorPaletteOutline, imageOutline, moonOutline, phonePortraitOutline, sunnyOutline} from 'ionicons/icons';
-import {CUSTOM_PRESET_ID, ThemeService} from '../theme.service';
-import {ACCENT_SWATCHES, findPreset} from '../theme/theme-presets';
+import {OWN_COLOR_TEMPLATE_ID, ThemeService} from '../theme.service';
+import {ACCENT_SWATCHES, findTemplate} from '../theme/theme-presets';
 import {BackgroundFit, SchemePreference, ThemeSettings} from '../theme/theme.model';
 
 function detailValue<T>(event: Event): T | undefined {
@@ -54,8 +54,8 @@ export class ThemeEditorComponent {
         this.modalCtrl.dismiss();
     }
 
-    selectPreset(presetId: string): void {
-        this.themeService.selectPreset(presetId);
+    selectTemplate(templateId: string): void {
+        this.themeService.selectTemplate(templateId);
     }
 
     selectAccent(accent: string): void {
@@ -64,16 +64,16 @@ export class ThemeEditorComponent {
 
     reset(): void {
         this.imageError = null;
-        this.themeService.reset();
+        this.themeService.resetCustom();
     }
 
-    /** Colours of a preset as it would look right now, used for the preview chips. */
-    previewStyle(presetId: string): Record<string, string> {
-        const preset = findPreset(presetId);
-        if (!preset) {
+    /** Colours of a template as it would look right now, used for the preview chips. */
+    previewStyle(templateId: string): Record<string, string> {
+        const template = findTemplate(templateId);
+        if (!template) {
             return {};
         }
-        const variables = this.themeService.preview(preset.seed);
+        const variables = this.themeService.preview(template.seed);
         return {
             '--preview-primary': variables['--ion-color-primary'],
             '--preview-secondary': variables['--ion-color-secondary'],
@@ -82,31 +82,32 @@ export class ThemeEditorComponent {
     }
 
     isAccent(settings: ThemeSettings, swatch: string): boolean {
-        return settings.presetId === CUSTOM_PRESET_ID
-            && settings.seed.accent?.toLowerCase() === swatch.toLowerCase();
+        return settings.custom.templateId === OWN_COLOR_TEMPLATE_ID
+            && settings.custom.seed.accent?.toLowerCase() === swatch.toLowerCase();
     }
 
     accentValue(settings: ThemeSettings): string {
-        return settings.seed.accent ?? this.themeService.preview(settings.seed)['--ion-color-primary'];
+        return settings.custom.seed.accent
+            ?? this.themeService.preview(settings.custom.seed)['--ion-color-primary'];
     }
 
     backgroundValue(settings: ThemeSettings): string {
-        return settings.background.color
-            ?? this.themeService.preview(settings.seed)['--ion-background-color'];
+        return settings.custom.background.color
+            ?? this.themeService.preview(settings.custom.seed)['--ion-background-color'];
     }
 
     intensityValue(settings: ThemeSettings): number {
         const options = this.themeService.intensityOptions;
+        const intensity = settings.custom.seed.intensity;
         return options.reduce((closest, option) =>
-            Math.abs(option.value - settings.seed.intensity) < Math.abs(closest - settings.seed.intensity)
-                ? option.value
-                : closest, options[0].value);
+            Math.abs(option.value - intensity) < Math.abs(closest - intensity) ? option.value : closest,
+            options[0].value);
     }
 
     onSchemeChange(event: Event): void {
         const value = detailValue<SchemePreference>(event);
         if (value) {
-            this.themeService.setScheme(value);
+            this.themeService.setCustomScheme(value);
         }
     }
 

@@ -19,7 +19,7 @@ import {
     IonToolbar
 } from '@ionic/angular/standalone';
 import { AsyncPipe, NgStyle } from '@angular/common';
-import { ThemeButtonComponent } from '../../shared/theme-button.component';
+import { ThemeMenuComponent } from '../../shared/theme-menu.component';
 
 export interface EnrichedSearchResult extends SearchVideoResult {
     courseName?: string;
@@ -33,7 +33,7 @@ export interface EnrichedSearchResult extends SearchVideoResult {
     imports: [
         IonHeader, IonToolbar, RouterLink, IonBackButton, IonTitle, NgStyle,
         IonContent, IonList, IonListHeader, IonItem, IonLabel, AsyncPipe,
-        IonSearchbar, IonSpinner, IonButtons, ThemeButtonComponent,
+        IonSearchbar, IonSpinner, IonButtons, ThemeMenuComponent,
     ]
 })
 export class ListPage implements OnInit {

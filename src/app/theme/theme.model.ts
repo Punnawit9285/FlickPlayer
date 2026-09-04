@@ -1,3 +1,5 @@
+/** What the appearance menu offers: the three standard modes plus a colour theme of your own. */
+export type ThemeMode = 'light' | 'dark' | 'system' | 'custom';
 export type ColorScheme = 'light' | 'dark';
 export type SchemePreference = ColorScheme | 'system';
 export type BackgroundFit = 'cover' | 'contain' | 'tile';
@@ -9,7 +11,7 @@ export const SEMANTIC_ROLES = [
 export type SemanticRole = typeof SEMANTIC_ROLES[number];
 
 /**
- * The few values a theme is described by. Everything else in the palette is derived,
+ * The few values a colour theme is described by. Everything else in the palette is derived,
  * so a theme never has to enumerate colours for individual features.
  */
 export interface ThemeSeed {
@@ -33,19 +35,32 @@ export interface ThemeBackground {
     imageFit: BackgroundFit;
 }
 
-export interface ThemeSettings {
-    presetId: string;
+/** Everything the custom mode remembers. The standard modes deliberately carry none of it. */
+export interface CustomTheme {
+    templateId: string;
     seed: ThemeSeed;
     scheme: SchemePreference;
     background: ThemeBackground;
+}
+
+export interface ThemeSettings {
+    mode: ThemeMode;
+    custom: CustomTheme;
     updatedAt: number;
 }
 
-export interface ThemePreset {
+export interface ThemeTemplate {
     id: string;
     name: string;
     description: string;
     seed: ThemeSeed;
+}
+
+export interface ThemeModeOption {
+    value: ThemeMode;
+    label: string;
+    description: string;
+    icon: string;
 }
 
 export interface IntensityOption {

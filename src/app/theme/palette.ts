@@ -19,6 +19,9 @@ import {
 } from './color';
 import {
     ACCENT_ROLES,
+    DEFAULT_SERIES_COLORS,
+    DEFAULT_SERIES_FALLBACK,
+    DEFAULT_SERIES_LABEL,
     SERIES_COUNT,
     SERIES_LIGHTNESS,
     SERIES_SATURATION,
@@ -170,12 +173,9 @@ export function buildThemeVariables(
     const readableOnSurfaces = (color: Rgb, minRatio: number) =>
         surfaces.reduce((result, surface) => adjustLightnessToContrast(result, surface, minRatio), color);
 
-    // A colour the theme derived has to earn its contrast; the untouched base palette is left as it is.
+    // Secondary text is held to a contrast target, but a chosen accent is left as chosen:
+    // a theme built from a brand colour has to render that colour, not an adjusted version.
     if (derived) {
-        for (const role of ACCENT_ROLES) {
-            roleColors[role] = adjustLightnessToContrast(
-                roleColors[role], contrastFor(roleColors[role]), MIN_MUTED_CONTRAST);
-        }
         roleColors.medium = readableOnSurfaces(roleColors.medium, MIN_MUTED_CONTRAST);
     }
     for (const role of SEMANTIC_ROLES) {
@@ -198,27 +198,38 @@ export function buildThemeVariables(
     variables['--flick-tag-background'] = toHex(mix(tagColor, pageBackground, TAG_SURFACE_WEIGHT));
     variables['--flick-warning-text'] = toHex(readableOnSurfaces(roleColors.warning, MIN_ACCENT_CONTRAST));
 
-    // Group colours share one label colour, so every hue is darkened until that label reads on it.
-    const seriesHue = rgbToHsl(roleColors.primary).h;
-    const seriesStep = 360 / SERIES_COUNT;
-    const seriesLabel = contrastFor(hslToRgb({
-        h: seriesHue,
-        s: SERIES_SATURATION[scheme],
-        l: SERIES_LIGHTNESS[scheme],
-    }));
-    for (let index = 0; index < SERIES_COUNT; index++) {
-        const color = adjustLightnessToContrast(
-            hslToRgb({
-                h: seriesHue + index * seriesStep,
-                s: SERIES_SATURATION[scheme],
-                l: SERIES_LIGHTNESS[scheme],
-            }),
-            seriesLabel,
-            MIN_SERIES_CONTRAST,
-        );
-        variables[`--flick-series-${index}`] = toHex(color);
+    // The standard modes keep the group colours the app has always used; a custom theme
+    // generates its own, spread around the accent and darkened until the label reads on them.
+    if (derived) {
+        const seriesHue = rgbToHsl(roleColors.primary).h;
+        const seriesStep = 360 / SERIES_COUNT;
+        const seriesLabel = contrastFor(hslToRgb({
+            h: seriesHue,
+            s: SERIES_SATURATION[scheme],
+            l: SERIES_LIGHTNESS[scheme],
+        }));
+        for (let index = 0; index < SERIES_COUNT; index++) {
+            const color = adjustLightnessToContrast(
+                hslToRgb({
+                    h: seriesHue + index * seriesStep,
+                    s: SERIES_SATURATION[scheme],
+                    l: SERIES_LIGHTNESS[scheme],
+                }),
+                seriesLabel,
+                MIN_SERIES_CONTRAST,
+            );
+            variables[`--flick-series-${index}`] = toHex(color);
+        }
+        variables['--flick-series-fallback'] = toHex(
+            adjustLightnessToContrast(roleColors.medium, seriesLabel, MIN_SERIES_CONTRAST));
+        variables['--flick-on-series'] = toHex(seriesLabel);
+    } else {
+        DEFAULT_SERIES_COLORS.forEach((color, index) => {
+            variables[`--flick-series-${index}`] = color;
+        });
+        variables['--flick-series-fallback'] = DEFAULT_SERIES_FALLBACK;
+        variables['--flick-on-series'] = DEFAULT_SERIES_LABEL;
     }
-    variables['--flick-on-series'] = toHex(seriesLabel);
 
     const heatAccent = adjustLightnessToContrast(roleColors.primary, pageBackground, MIN_HEATMAP_CONTRAST);
     variables['--flick-heat-0'] = toHex(mix(pageText, pageBackground, HEATMAP_EMPTY_WEIGHT));

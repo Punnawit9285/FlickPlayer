@@ -88,9 +88,14 @@
     position: relative;
 }
 
+.calendar-area {
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+}
+
 .calendar-scroll {
     overflow-x: auto;
-    flex: 1;
     min-width: 0;
     padding-bottom: 0.25rem;
 }
@@ -129,6 +134,8 @@
 
 .month-row {
     height: 1.1rem;
+    /* The last month name is wider than its column and would otherwise be clipped. */
+    padding-inline-end: 1.25rem;
 }
 
 .month-label {
@@ -177,21 +184,20 @@
     --cell-size: 0.72rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
+    justify-content: flex-end;
+    gap: 0.18rem;
     margin-top: 0.4rem;
     font-size: 0.7rem;
     color: var(--flick-muted-text);
 }
 
-.legend-hint {
-    flex: 1;
-    min-width: 0;
+.legend .cell {
+    margin: 0 0.06rem;
 }
 
-.legend-scale {
-    display: flex;
-    align-items: center;
-    gap: 0.18rem;
-    flex-shrink: 0;
+.empty-hint {
+    margin: 0.6rem 0 0;
+    font-size: 0.72rem;
+    text-align: center;
+    color: var(--flick-muted-text);
 }

@@ -11,13 +11,13 @@
     color: var(--flick-muted-text);
 }
 
-.preset-grid {
+.template-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
     gap: 0.5rem;
 }
 
-.preset-card {
+.template-card {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
@@ -30,12 +30,12 @@
     cursor: pointer;
 }
 
-.preset-card.selected {
+.template-card.selected {
     border-color: var(--ion-color-primary);
     box-shadow: 0 0 0 1px var(--ion-color-primary);
 }
 
-.preset-preview {
+.template-preview {
     display: flex;
     gap: 0.25rem;
     padding: 0.4rem;
@@ -57,12 +57,12 @@
     background: var(--preview-secondary);
 }
 
-.preset-name {
+.template-name {
     font-size: 0.9rem;
     font-weight: 600;
 }
 
-.preset-description {
+.template-description {
     font-size: 0.72rem;
     color: var(--flick-muted-text);
 }

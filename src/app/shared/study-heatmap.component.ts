@@ -48,6 +48,8 @@ interface StatTile {
 }
 
 const WEEKDAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+/** A month name is wider than its column, so this much overhang is not real overflow. */
+const MONTH_LABEL_OVERHANG = 32;
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /**
@@ -293,9 +295,10 @@ export class StudyHeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
         return minutes ? hours + 'h ' + minutes + 'm' : hours + 'h';
     }
 
+    /** Only jump to today when the calendar genuinely does not fit; otherwise it stays centred. */
     private scrollToToday() {
         const element = this.scroller?.nativeElement;
-        if (element) {
+        if (element && element.scrollWidth - element.clientWidth > MONTH_LABEL_OVERHANG) {
             element.scrollLeft = element.scrollWidth;
         }
     }

@@ -3,11 +3,13 @@ import {buildThemeVariables} from './palette';
 import {
     BASE_SCHEMES,
     DEFAULT_BACKGROUND,
+    DEFAULT_SERIES_COLORS,
     MIN_MUTED_CONTRAST,
     MIN_SERIES_CONTRAST,
     MIN_TEXT_CONTRAST,
+    NEUTRAL_SEED,
     SERIES_COUNT,
-    THEME_PRESETS,
+    THEME_TEMPLATES,
 } from './theme-presets';
 import {ColorScheme, SEMANTIC_ROLES, ThemeSeed} from './theme.model';
 
@@ -22,9 +24,9 @@ function build(seed: ThemeSeed, scheme: ColorScheme, background = DEFAULT_BACKGR
 }
 
 describe('buildThemeVariables', () => {
-    it('should leave the base palette untouched for the default theme', () => {
+    it('should leave the base palette untouched for the standard modes', () => {
         for (const scheme of SCHEMES) {
-            const variables = build(THEME_PRESETS[0].seed, scheme);
+            const variables = build(NEUTRAL_SEED, scheme);
             const base = BASE_SCHEMES[scheme];
             expect(variables['--ion-background-color']).toBe(base.background);
             expect(variables['--ion-text-color']).toBe(base.text);
@@ -34,20 +36,29 @@ describe('buildThemeVariables', () => {
         }
     });
 
+    it('should keep the course colours the app has always used outside a custom theme', () => {
+        for (const scheme of SCHEMES) {
+            const variables = build(NEUTRAL_SEED, scheme);
+            DEFAULT_SERIES_COLORS.forEach((color, index) => {
+                expect(variables[`--flick-series-${index}`]).toBe(color);
+            });
+        }
+    });
+
     it('should derive Ionic shade, tint and contrast the same way Ionic does', () => {
-        const variables = build(THEME_PRESETS[0].seed, 'light');
+        const variables = build(NEUTRAL_SEED, 'light');
         expect(variables['--ion-color-primary-shade']).toBe('#3171e0');
         expect(variables['--ion-color-primary-tint']).toBe('#4c8dff');
         expect(variables['--ion-color-primary-contrast']).toBe('#ffffff');
         expect(variables['--ion-color-warning-contrast']).toBe('#000000');
     });
 
-    it('should keep body text readable in every preset and mode', () => {
-        for (const preset of THEME_PRESETS) {
+    it('should keep body text readable in every template and mode', () => {
+        for (const template of THEME_TEMPLATES) {
             for (const scheme of SCHEMES) {
-                const variables = build(preset.seed, scheme);
-                const contrast = ratio(variables['--ion-text-color'], variables['--ion-background-color']);
-                expect(contrast).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+                const variables = build(template.seed, scheme);
+                expect(ratio(variables['--ion-text-color'], variables['--ion-background-color']))
+                    .toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
             }
         }
     });
@@ -57,9 +68,9 @@ describe('buildThemeVariables', () => {
             '--ion-background-color', '--ion-card-background',
             '--ion-item-background', '--ion-toolbar-background', '--flick-surface-muted',
         ];
-        for (const preset of THEME_PRESETS) {
+        for (const template of THEME_TEMPLATES) {
             for (const scheme of SCHEMES) {
-                const variables = build(preset.seed, scheme);
+                const variables = build(template.seed, scheme);
                 for (const surface of surfaces) {
                     expect(ratio(variables['--flick-muted-text'], variables[surface]))
                         .toBeGreaterThanOrEqual(MIN_MUTED_CONTRAST - 0.01);
@@ -68,14 +79,16 @@ describe('buildThemeVariables', () => {
         }
     });
 
-    it('should label every group colour legibly', () => {
-        for (const preset of THEME_PRESETS) {
+    it('should label every generated course colour legibly', () => {
+        for (const template of THEME_TEMPLATES) {
             for (const scheme of SCHEMES) {
-                const variables = build(preset.seed, scheme);
+                const variables = build(template.seed, scheme);
                 for (let index = 0; index < SERIES_COUNT; index++) {
                     expect(ratio(variables[`--flick-series-${index}`], variables['--flick-on-series']))
                         .toBeGreaterThanOrEqual(MIN_SERIES_CONTRAST - 0.01);
                 }
+                expect(ratio(variables['--flick-series-fallback'], variables['--flick-on-series']))
+                    .toBeGreaterThanOrEqual(MIN_SERIES_CONTRAST - 0.01);
             }
         }
     });
@@ -91,7 +104,7 @@ describe('buildThemeVariables', () => {
     });
 
     it('should give the heatmap a ramp that ends at the accent', () => {
-        const variables = build(THEME_PRESETS[2].seed, 'light');
+        const variables = build(THEME_TEMPLATES[0].seed, 'light');
         const levels = [0, 1, 2, 3, 4].map(level => variables[`--flick-heat-${level}`]);
         expect(new Set(levels).size).toBe(levels.length);
         expect(levels[4]).toBe(variables['--flick-accent']);
