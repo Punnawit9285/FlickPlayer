@@ -31,6 +31,8 @@ export const APPLIED_THEME_KEY = 'flickThemeApplied';
 export const THEME_STORAGE_KEY_PREFIX = 'flickTheme_';
 export const THEME_SYNC_COLLECTION = 'userThemes';
 export const BACKGROUND_IMAGE_CLASS = 'flick-has-background-image';
+/** Settings changes are collected for this long before one write goes to the server. */
+export const REMOTE_SYNC_DEBOUNCE_MS = 1500;
 const GUEST_ID = 'guest';
 
 function clamp(value: number, min: number, max: number): number {
@@ -112,14 +114,21 @@ export class ThemeService {
     private objectUrl: string | null = null;
     private remoteSubscription: Unsubscribe | null = null;
     private darkQuery: MediaQueryList | null = null;
+    private remoteTimer: ReturnType<typeof setTimeout> | null = null;
+    private pendingRemote: ThemeSettings | null = null;
+    private lastRemotePayload = '';
 
     constructor() {
         const destroyRef = inject(DestroyRef);
         this.darkQuery = window.matchMedia?.('(prefers-color-scheme: dark)') ?? null;
         const onSystemChange = () => this.apply(this.settingsSubject.value, false);
         this.darkQuery?.addEventListener('change', onSystemChange);
+        const flush = () => this.flushRemote();
+        window.addEventListener('pagehide', flush);
         destroyRef.onDestroy(() => {
             this.darkQuery?.removeEventListener('change', onSystemChange);
+            window.removeEventListener('pagehide', flush);
+            this.flushRemote();
             this.stopRemoteSync();
             this.releaseObjectUrl();
         });
@@ -323,6 +332,7 @@ export class ThemeService {
                     }
                     const settings = sanitizeSettings(remote);
                     if (settings.updatedAt > this.settings.updatedAt) {
+                        this.lastRemotePayload = JSON.stringify(settings);
                         this.apply(settings, false);
                         this.writeLocal(settings);
                     }
@@ -337,12 +347,43 @@ export class ThemeService {
     private stopRemoteSync(): void {
         this.remoteSubscription?.();
         this.remoteSubscription = null;
+        if (this.remoteTimer) {
+            clearTimeout(this.remoteTimer);
+            this.remoteTimer = null;
+        }
+        this.pendingRemote = null;
     }
 
+    /**
+     * Dragging a slider changes the theme many times a second. Only the settled value is sent,
+     * so a whole adjustment costs one small write instead of one per frame.
+     */
     private writeRemote(settings: ThemeSettings): void {
         if (this.userId === GUEST_ID) {
             return;
         }
+        this.pendingRemote = settings;
+        if (this.remoteTimer) {
+            clearTimeout(this.remoteTimer);
+        }
+        this.remoteTimer = setTimeout(() => this.flushRemote(), REMOTE_SYNC_DEBOUNCE_MS);
+    }
+
+    private flushRemote(): void {
+        if (this.remoteTimer) {
+            clearTimeout(this.remoteTimer);
+            this.remoteTimer = null;
+        }
+        const settings = this.pendingRemote;
+        this.pendingRemote = null;
+        if (!settings || this.userId === GUEST_ID) {
+            return;
+        }
+        const payload = JSON.stringify(settings);
+        if (payload === this.lastRemotePayload) {
+            return;
+        }
+        this.lastRemotePayload = payload;
         setDoc(doc(this.firestore, THEME_SYNC_COLLECTION, this.userId), settings, {merge: true})
             .catch(() => this.stopRemoteSync());
     }
