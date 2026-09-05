@@ -1,13 +1,20 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
+import {AsyncPipe} from '@angular/common';
+import {UserSyncService} from '../user-sync.service';
 
 /** Plain-language explanation of the heatmap, shown from the card header. */
 @Component({
     selector: 'app-study-heatmap-guide',
     templateUrl: './study-heatmap-guide.component.html',
     styleUrls: ['./study-heatmap-guide.component.scss'],
-    imports: [],
+    imports: [AsyncPipe],
 })
 export class StudyHeatmapGuideComponent {
+    protected readonly synced$ = inject(UserSyncService).active$;
+    protected readonly storageWhenSynced =
+        'Your calendar belongs to your account, so every device you sign in on adds up together.';
+    protected readonly storageWhenLocal =
+        'Your calendar is kept on the device you study on, so a phone and a laptop each keep their own.';
     title = 'Your study calendar';
     summary = 'Every small square is one day. The more you studied that day, the stronger its colour.';
     points = [

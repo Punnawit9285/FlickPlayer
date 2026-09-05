@@ -2,7 +2,15 @@ import {TestBed} from '@angular/core/testing';
 import {of} from 'rxjs';
 
 import {AuthService} from './auth.service';
-import {addDays, computeStudyStats, StudyDayMap, StudyStatsService, toDateKey} from './study-stats.service';
+import {
+    addDays,
+    computeStudyStats,
+    mergeDevices,
+    StudyDayMap,
+    StudyStatsService,
+    SyncedDevices,
+    toDateKey,
+} from './study-stats.service';
 
 function daysFrom(offsets: number[], seconds = 600): StudyDayMap {
     const map: StudyDayMap = {};
@@ -29,6 +37,46 @@ describe('StudyStatsService', () => {
         service.recordVideoProgress(42);
         const today = service.getDays()[toDateKey(new Date())];
         expect(today.videoIds).toEqual([42]);
+    });
+});
+
+describe('mergeDevices', () => {
+    const own: StudyDayMap = {
+        '2026-09-01': {seconds: 600, videoIds: [1], pomodoros: 1},
+        '2026-09-02': {seconds: 300, videoIds: [2], pomodoros: 0},
+    };
+    const others: SyncedDevices = {
+        phone: {'2026-09-02': {seconds: 900, videos: 2, pomodoros: 1}},
+        tablet: {'2026-09-03': {seconds: 120, videos: 1, pomodoros: 0}},
+    };
+
+    it('should add every device together for a day they all studied', () => {
+        expect(mergeDevices(own, others)['2026-09-02'].seconds).toBe(1200);
+        expect(mergeDevices(own, others)['2026-09-02'].pomodoros).toBe(1);
+    });
+
+    it('should keep days only one device knows about', () => {
+        const merged = mergeDevices(own, others);
+        expect(merged['2026-09-01'].seconds).toBe(600);
+        expect(merged['2026-09-03'].seconds).toBe(120);
+    });
+
+    it('should not let a merge alter this device\'s own record', () => {
+        mergeDevices(own, others);
+        expect(own['2026-09-02'].seconds).toBe(300);
+        expect(own['2026-09-01'].videoIds.length).toBe(1);
+    });
+
+    it('should count videos from other devices without their identifiers', () => {
+        const merged = mergeDevices(own, others);
+        expect(merged['2026-09-02'].videoIds).toEqual([2]);
+        expect(merged['2026-09-02'].remoteVideos).toBe(2);
+    });
+
+    it('should be unaffected by the order devices arrive in', () => {
+        const reversed: SyncedDevices = {tablet: others.tablet, phone: others.phone};
+        expect(mergeDevices(own, reversed)['2026-09-02'].seconds)
+            .toBe(mergeDevices(own, others)['2026-09-02'].seconds);
     });
 });
 

@@ -3,7 +3,6 @@ import {
     BaseScheme,
     ColorScheme,
     CustomTheme,
-    SchemeOption,
     SemanticRole,
     SurfaceSteps,
     ThemeBackground,
@@ -154,32 +153,42 @@ export const THEME_MODES: ThemeModeOption[] = [
 
 export const DEFAULT_MODE = THEME_MODES[2].value;
 
+/** The modes that are not a custom theme, offered inside the editor as the way back out. */
+export const STANDARD_MODES = THEME_MODES.filter(option => option.value !== 'custom');
+
+/** A custom theme always renders light, so a chosen colour shows as itself. */
+export const CUSTOM_SCHEME: ColorScheme = 'light';
+
 /** Brand colours taken from the faculty's own sites. */
 export const FACULTY_ACCENT = '#1f6241';
 export const UNIVERSITY_ACCENT = '#e91e90';
-/** The soft pink page the university theme is drawn on. */
+/** The pages the brand colours are drawn on. */
 export const UNIVERSITY_PAGE = '#fdf0f5';
+export const FACULTY_PAGE = '#f2f6f4';
 
-/** Ready-made colour templates offered inside the custom mode. */
+/**
+ * Ready-made colour templates. Each names the page it is drawn on and the colour everything
+ * else is drawn in, so a pairing can be offered either way round.
+ */
 export const THEME_TEMPLATES: ThemeTemplate[] = [
     {
         id: 'university',
         name: 'Pink',
-        description: 'The university colour.',
+        description: 'Pink page with pink buttons.',
         seed: {accent: UNIVERSITY_ACCENT, companion: null, tertiary: null, surfaceTint: null, intensity: 1},
         background: UNIVERSITY_PAGE,
     },
     {
         id: 'faculty',
         name: 'Green',
-        description: 'The faculty colour.',
+        description: 'Green page with green buttons.',
         seed: {accent: FACULTY_ACCENT, companion: null, tertiary: null, surfaceTint: null, intensity: 1},
-        background: null,
+        background: FACULTY_PAGE,
     },
     {
-        id: 'faculty-university',
+        id: 'university-faculty',
         name: 'Pink & Green',
-        description: 'Green on a pink page.',
+        description: 'Pink page with green buttons.',
         seed: {
             accent: FACULTY_ACCENT,
             companion: null,
@@ -189,26 +198,36 @@ export const THEME_TEMPLATES: ThemeTemplate[] = [
         },
         background: UNIVERSITY_PAGE,
     },
+    {
+        id: 'faculty-university',
+        name: 'Green & Pink',
+        description: 'Green page with pink buttons.',
+        seed: {
+            accent: UNIVERSITY_ACCENT,
+            companion: null,
+            tertiary: null,
+            surfaceTint: FACULTY_ACCENT,
+            intensity: 1,
+        },
+        background: FACULTY_PAGE,
+    },
 ];
 
 /** Used when the colour comes from the picker rather than a template. */
 export const OWN_COLOR_TEMPLATE_ID = 'own';
 export const DEFAULT_TEMPLATE_ID = THEME_TEMPLATES[0].id;
 
-/** Curated accents for the picker, chosen to stay legible at any intensity. */
+/**
+ * Curated accents for the picker. The brand colours are left out because the templates
+ * already offer them, which keeps the row to a single line.
+ */
 export const ACCENT_SWATCHES: string[] = [
-    '#3880ff', '#0f6b3f', '#e91e90', '#0f766e', '#7c3aed',
-    '#b45309', '#be123c', '#0369a1', '#4d7c0f', '#475569',
+    '#3880ff', '#0f766e', '#7c3aed', '#b45309',
+    '#be123c', '#0369a1', '#4d7c0f', '#475569',
 ];
 
 /** A colour picked in the editor tints the page as fully as a template does. */
 export const OWN_COLOR_INTENSITY = 1;
-
-export const SCHEME_OPTIONS: SchemeOption[] = [
-    {value: 'light', label: 'Light', icon: 'sunny-outline'},
-    {value: 'dark', label: 'Dark', icon: 'moon-outline'},
-    {value: 'system', label: 'System', icon: 'phone-portrait-outline'},
-];
 
 export const BACKGROUND_FIT_OPTIONS: BackgroundFitOption[] = [
     {value: 'cover', label: 'Fill'},
@@ -238,8 +257,6 @@ export function defaultCustomTheme(): CustomTheme {
     return {
         templateId: template.id,
         seed: {...template.seed},
-        // A chosen colour is shown as itself rather than folded into the device's dark mode.
-        scheme: 'light',
         background: {...DEFAULT_BACKGROUND, color: template.background},
     };
 }

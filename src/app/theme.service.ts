@@ -3,6 +3,7 @@ import {BehaviorSubject, Observable} from 'rxjs';
 import {distinctUntilChanged, map} from 'rxjs/operators';
 import {ulid} from 'ulid';
 import {AuthService} from './auth.service';
+import {UserSyncService} from './user-sync.service';
 import {isValidColor} from './theme/color';
 import {buildThemeVariables, CssVariables} from './theme/palette';
 import {
@@ -11,10 +12,11 @@ import {
     defaultCustomTheme,
     defaultThemeSettings,
     findTemplate,
+    CUSTOM_SCHEME,
     NEUTRAL_SEED,
     OWN_COLOR_INTENSITY,
+    STANDARD_MODES,
     OWN_COLOR_TEMPLATE_ID,
-    SCHEME_OPTIONS,
     THEME_MODES,
     THEME_TEMPLATES,
 } from './theme/theme-presets';
@@ -71,9 +73,6 @@ function sanitizeCustom(raw: unknown): CustomTheme {
     return {
         templateId,
         seed: template ? {...template.seed} : sanitizeSeed(value.seed),
-        scheme: SCHEME_OPTIONS.some(option => option.value === value.scheme)
-            ? value.scheme as SchemePreference
-            : fallback.scheme,
         background: {
             color: storedBackground ? sanitizeColor(background.color) : (template?.background ?? null),
             imageId: typeof background.imageId === 'string' ? background.imageId : null,
@@ -104,10 +103,11 @@ export function sanitizeSettings(raw: unknown): ThemeSettings {
 })
 export class ThemeService {
     private imageStore = new BackgroundImageStore();
+    private sync = inject(UserSyncService);
 
     readonly modes = THEME_MODES;
     readonly templates = THEME_TEMPLATES;
-    readonly schemeOptions = SCHEME_OPTIONS;
+    readonly standardModes = STANDARD_MODES;
     readonly backgroundFitOptions = BACKGROUND_FIT_OPTIONS;
 
     private readonly settingsSubject = new BehaviorSubject<ThemeSettings>(defaultThemeSettings());
@@ -193,10 +193,6 @@ export class ThemeService {
         });
     }
 
-    setCustomScheme(scheme: SchemePreference): void {
-        this.updateCustom({scheme});
-    }
-
     setBackgroundColor(color: string | null): void {
         if (color !== null && !isValidColor(color)) {
             return;
@@ -254,7 +250,7 @@ export class ThemeService {
     private resolve(settings: ThemeSettings): {scheme: ColorScheme, seed: ThemeSeed, background: ThemeBackground} {
         if (settings.mode === 'custom') {
             return {
-                scheme: this.resolveScheme(settings.custom.scheme),
+                scheme: CUSTOM_SCHEME,
                 seed: settings.custom.seed,
                 background: settings.custom.background,
             };
@@ -284,6 +280,7 @@ export class ThemeService {
 
         if (persist) {
             this.writeLocal(settings);
+            this.sync.queue({theme: this.themeForSync(settings)}, true);
         }
     }
 
@@ -330,9 +327,50 @@ export class ThemeService {
         const stored = this.readLocal(uid);
         const adoptGuest = guestSettings && guestSettings.updatedAt > stored.updatedAt;
         this.apply(adoptGuest ? guestSettings : stored, adoptGuest);
+        this.sync.attach(uid);
+        void this.pullRemote();
+    }
+
+    /**
+     * Adopt the theme from another device when it is the more recent one. The picture itself
+     * never travels, so whatever this device has stays in place.
+     */
+    private async pullRemote(): Promise<void> {
+        const remote = await this.sync.read();
+        if (!remote?.theme) {
+            return;
+        }
+        const incoming = sanitizeSettings(remote.theme);
+        if (incoming.updatedAt <= this.settings.updatedAt) {
+            return;
+        }
+        const settings: ThemeSettings = {
+            ...incoming,
+            custom: {
+                ...incoming.custom,
+                background: {
+                    ...incoming.custom.background,
+                    imageId: this.settings.custom.background.imageId,
+                },
+            },
+        };
+        this.apply(settings, false);
+        this.writeLocal(settings);
+    }
+
+    /** The picture stays on the device that uploaded it, so its identifier is left behind. */
+    private themeForSync(settings: ThemeSettings): ThemeSettings {
+        return {
+            ...settings,
+            custom: {
+                ...settings.custom,
+                background: {...settings.custom.background, imageId: null},
+            },
+        };
     }
 
     private detachUser(): void {
+        this.sync.detach();
         this.userId = GUEST_ID;
         this.apply(this.readLocal(GUEST_ID), false);
     }

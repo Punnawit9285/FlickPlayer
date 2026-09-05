@@ -35,11 +35,13 @@ export interface ThemeBackground {
     imageFit: BackgroundFit;
 }
 
-/** Everything the custom mode remembers. The standard modes deliberately carry none of it. */
+/**
+ * Everything the custom mode remembers. The standard modes deliberately carry none of it,
+ * and a custom theme is always drawn light so a chosen colour shows as itself.
+ */
 export interface CustomTheme {
     templateId: string;
     seed: ThemeSeed;
-    scheme: SchemePreference;
     background: ThemeBackground;
 }
 
@@ -62,12 +64,6 @@ export interface ThemeModeOption {
     value: ThemeMode;
     label: string;
     description: string;
-    icon: string;
-}
-
-export interface SchemeOption {
-    value: SchemePreference;
-    label: string;
     icon: string;
 }
 

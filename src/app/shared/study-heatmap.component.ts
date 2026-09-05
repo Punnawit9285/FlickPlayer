@@ -194,10 +194,11 @@ export class StudyHeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
                     key,
                     seconds,
                     pomodoros: day?.pomodoros ?? 0,
-                    videos: day?.videoIds?.length ?? 0,
+                    videos: (day?.videoIds?.length ?? 0) + (day?.remoteVideos ?? 0),
                     level: this.levelOf(seconds, thresholds),
                     inRange: key >= startKey && key <= todayKey,
-                    label: this.describe(date, seconds, day?.videoIds?.length ?? 0, day?.pomodoros ?? 0),
+                    label: this.describe(date, seconds,
+                        (day?.videoIds?.length ?? 0) + (day?.remoteVideos ?? 0), day?.pomodoros ?? 0),
                 });
             }
             // Label the column a month starts in, plus the leftmost one when its month started off-grid.

@@ -12,6 +12,35 @@
 <ion-content class="ion-padding">
     @if (settings$ | async; as settings) {
         <section class="theme-section">
+            <h2 class="section-title">Pre-made templates</h2>
+            <p class="section-hint">Ready-made pairings first, then quick colours.</p>
+            <div class="swatch-row">
+                @for (template of themeService.templates; track template.id) {
+                    <button type="button" class="swatch swatch-template"
+                            [class.selected]="template.id === settings.custom.templateId"
+                            [style]="templateSwatch(template)"
+                            [attr.aria-label]="template.name + '. ' + template.description"
+                            [title]="template.name + ' — ' + template.description"
+                            (click)="selectTemplate(template.id)"></button>
+                }
+
+                <span class="swatch-divider" aria-hidden="true"></span>
+
+                @for (swatch of accentSwatches; track swatch) {
+                    <button type="button" class="swatch"
+                            [class.selected]="isAccent(settings, swatch)"
+                            [style.background-color]="swatch"
+                            [attr.aria-label]="'Use colour ' + swatch"
+                            (click)="selectAccent(swatch)"></button>
+                }
+                <label class="swatch swatch-picker" aria-label="Pick any colour">
+                    <ion-icon name="color-palette-outline"></ion-icon>
+                    <input type="color" [value]="accentValue(settings)" (input)="onAccentInput($event)"/>
+                </label>
+            </div>
+        </section>
+
+        <section class="theme-section">
             <h2 class="section-title">Primary colour</h2>
             <p class="section-hint">The page behind everything.</p>
             <div class="colour-row">
@@ -30,32 +59,11 @@
 
         <section class="theme-section">
             <h2 class="section-title">Secondary colour</h2>
-            <p class="section-hint">Buttons, links, the toolbar, course cards and the heatmap.</p>
-
-            <div class="template-grid">
-                @for (template of themeService.templates; track template.id) {
-                    <button type="button" class="template-card"
-                            [class.selected]="template.id === settings.custom.templateId"
-                            (click)="selectTemplate(template.id)">
-                        <span class="template-preview" [style]="previewStyle(template.id)">
-                            <span class="preview-chip preview-primary"></span>
-                            <span class="preview-chip preview-secondary"></span>
-                        </span>
-                        <span class="template-name">{{ template.name }}</span>
-                    </button>
-                }
-            </div>
-
-            <div class="swatch-row">
-                @for (swatch of accentSwatches; track swatch) {
-                    <button type="button" class="swatch"
-                            [class.selected]="isAccent(settings, swatch)"
-                            [style.background-color]="swatch"
-                            [attr.aria-label]="'Use colour ' + swatch"
-                            (click)="selectAccent(swatch)"></button>
-                }
-                <label class="swatch swatch-picker" aria-label="Pick any colour">
-                    <ion-icon name="color-palette-outline"></ion-icon>
+            <p class="section-hint">Buttons, links, outlines, course cards and the heatmap.</p>
+            <div class="colour-row">
+                <label class="colour-field">
+                    <span class="colour-preview" [style.background-color]="accentValue(settings)"></span>
+                    <span class="colour-value">{{ accentValue(settings) }}</span>
                     <input type="color" [value]="accentValue(settings)" (input)="onAccentInput($event)"/>
                 </label>
             </div>
@@ -63,8 +71,9 @@
 
         <section class="theme-section">
             <h2 class="section-title">Light or dark</h2>
-            <ion-segment [value]="settings.custom.scheme" (ionChange)="onSchemeChange($event)">
-                @for (option of themeService.schemeOptions; track option.value) {
+            <p class="section-hint">Leaves your colours behind and goes back to the plain theme.</p>
+            <ion-segment [value]="null" (ionChange)="onModeChange($event)">
+                @for (option of themeService.standardModes; track option.value) {
                     <ion-segment-button [value]="option.value">
                         <ion-icon [name]="option.icon"></ion-icon>
                         <ion-label>{{ option.label }}</ion-label>

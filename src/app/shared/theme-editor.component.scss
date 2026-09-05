@@ -41,62 +41,22 @@
     color: var(--flick-muted-text);
 }
 
-.template-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-}
-
-.template-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    align-items: center;
-    padding: 0.5rem;
-    border: 1px solid var(--ion-border-color, var(--ion-color-step-150));
-    border-radius: 10px;
-    background: var(--flick-surface);
-    color: var(--ion-text-color);
-    cursor: pointer;
-}
-
-.template-card.selected {
-    border-color: var(--ion-color-primary);
-    box-shadow: 0 0 0 1px var(--ion-color-primary);
-}
-
-.template-preview {
-    display: flex;
-    gap: 0.25rem;
-    padding: 0.4rem;
-    border-radius: 6px;
-    background: var(--preview-background);
-}
-
-.preview-chip {
-    width: 1.1rem;
-    height: 1.1rem;
-    border-radius: 50%;
-}
-
-.preview-primary {
-    background: var(--preview-primary);
-}
-
-.preview-secondary {
-    background: var(--preview-secondary);
-}
-
-.template-name {
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
 .swatch-row {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.4rem;
-    margin-top: 0.75rem;
+}
+
+.swatch-template {
+    background: linear-gradient(90deg, var(--swatch-from) 0 50%, var(--swatch-to) 50% 100%);
+}
+
+.swatch-divider {
+    width: 1px;
+    height: 1.5rem;
+    margin: 0 0.15rem;
+    background: var(--ion-border-color, var(--ion-color-step-150));
 }
 
 .swatch {

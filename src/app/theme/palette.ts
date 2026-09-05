@@ -169,7 +169,12 @@ export function buildThemeVariables(
     variables['--ion-toolbar-color'] = toHex(pageText);
     variables['--ion-border-color'] = toHex(border);
 
-    const surfaces = [pageBackground, card, item, toolbar, mix(pageText, pageBackground, HEATMAP_EMPTY_WEIGHT)];
+    // Every surface text can land on, including the light role, which some pages use as a page.
+    const surfaces = [
+        pageBackground, card, item, toolbar,
+        roleColors.light,
+        mix(pageText, pageBackground, HEATMAP_EMPTY_WEIGHT),
+    ];
     const readableOnSurfaces = (color: Rgb, minRatio: number) =>
         surfaces.reduce((result, surface) => adjustLightnessToContrast(result, surface, minRatio), color);
 

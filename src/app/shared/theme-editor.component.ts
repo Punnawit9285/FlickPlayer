@@ -19,8 +19,8 @@ import {
 import {addIcons} from 'ionicons';
 import {close, colorPaletteOutline, imageOutline, moonOutline, phonePortraitOutline, sunnyOutline} from 'ionicons/icons';
 import {OWN_COLOR_TEMPLATE_ID, ThemeService} from '../theme.service';
-import {ACCENT_SWATCHES, findTemplate} from '../theme/theme-presets';
-import {BackgroundFit, SchemePreference, ThemeSettings} from '../theme/theme.model';
+import {ACCENT_SWATCHES} from '../theme/theme-presets';
+import {BackgroundFit, ThemeMode, ThemeSettings, ThemeTemplate} from '../theme/theme.model';
 
 function detailValue<T>(event: Event): T | undefined {
     return (event as CustomEvent<{value?: T}>).detail?.value;
@@ -67,17 +67,12 @@ export class ThemeEditorComponent {
         this.themeService.resetCustom();
     }
 
-    /** Colours of a template as it would look right now, used for the preview chips. */
-    previewStyle(templateId: string): Record<string, string> {
-        const template = findTemplate(templateId);
-        if (!template) {
-            return {};
-        }
-        const variables = this.themeService.preview(template.seed);
+    /** A template reads as its page colour beside the colour everything else is drawn in. */
+    templateSwatch(template: ThemeTemplate): Record<string, string> {
+        const accent = template.seed.accent ?? '';
         return {
-            '--preview-primary': variables['--ion-color-primary'],
-            '--preview-secondary': variables['--ion-color-secondary'],
-            '--preview-background': variables['--ion-background-color'],
+            '--swatch-from': template.seed.surfaceTint ?? accent,
+            '--swatch-to': accent,
         };
     }
 
@@ -96,10 +91,12 @@ export class ThemeEditorComponent {
             ?? this.themeService.preview(settings.custom.seed)['--ion-background-color'];
     }
 
-    onSchemeChange(event: Event): void {
-        const value = detailValue<SchemePreference>(event);
+    /** The plain modes replace the custom theme rather than recolouring it. */
+    onModeChange(event: Event): void {
+        const value = detailValue<ThemeMode>(event);
         if (value) {
-            this.themeService.setCustomScheme(value);
+            this.themeService.setMode(value);
+            this.close();
         }
     }
 
