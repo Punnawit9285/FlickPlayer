@@ -9,12 +9,12 @@ import {AuthService} from '../auth.service';
 
 describe('WelcomePage.goToHome', () => {
     let component: WelcomePage;
-    let manService: jasmine.SpyObj<Pick<ManService, 'setIdToken' | 'checkAuthorization' | 'changeEndpoint'>>;
+    let manService: jasmine.SpyObj<Pick<ManService, 'checkAuthorization' | 'changeEndpoint'>>;
     let router: jasmine.SpyObj<Pick<Router, 'navigate'>>;
     let alertSpy: jasmine.Spy;
 
     beforeEach(() => {
-        manService = jasmine.createSpyObj('ManService', ['setIdToken', 'checkAuthorization', 'changeEndpoint']);
+        manService = jasmine.createSpyObj('ManService', ['checkAuthorization', 'changeEndpoint']);
         router = jasmine.createSpyObj('Router', ['navigate']);
 
         TestBed.configureTestingModule({
@@ -28,20 +28,19 @@ describe('WelcomePage.goToHome', () => {
         });
         component = TestBed.inject(WelcomePage);
         alertSpy = spyOn(component, 'alertError').and.returnValue(Promise.resolve());
-        component.user = {getIdToken: () => Promise.resolve('token')} as never;
     });
 
     it('ngOnDestroy() does not throw when ngOnInit never set up the auth-state subscription', () => {
         expect(() => component.ngOnDestroy()).not.toThrow();
     });
 
-    it('navigates straight home without fetching a token when already auth-checked', () => {
+    it('navigates straight home without checking authorization again when already auth-checked', () => {
         component.isAuthChecked = true;
 
         component.goToHome();
 
         expect(router.navigate).toHaveBeenCalledWith(['/home']);
-        expect(manService.setIdToken).not.toHaveBeenCalled();
+        expect(manService.checkAuthorization).not.toHaveBeenCalled();
     });
 
     it('navigates home when authorization succeeds', fakeAsync(() => {

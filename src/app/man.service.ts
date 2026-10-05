@@ -1,7 +1,7 @@
 import {inject, Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
-import {combineLatestWith, Observable, of, startWith, takeUntil, timer} from 'rxjs';
-import {map, shareReplay, switchMap, timeout} from 'rxjs/operators';
+import {HttpClient, HttpErrorResponse, HttpHeaders, HttpParams} from '@angular/common/http';
+import {combineLatestWith, Observable, of, startWith, takeUntil, throwError, timer} from 'rxjs';
+import {catchError, map, shareReplay, switchMap, timeout} from 'rxjs/operators';
 import {PlayHistory, PlayHistoryValue, PlayTrackerService} from './play-tracker.service';
 import {AuthService} from './auth.service';
 
@@ -12,19 +12,13 @@ import {AuthService} from './auth.service';
 export class ManService {
     private http = inject(HttpClient);
     private playTracker = inject(PlayTrackerService);
+    private authService = inject(AuthService);
 
     private videoList: Observable<CourseListResponse>;
     private endpoint = ['https://flick-man-app.docchula.com/', 'https://flick-man-cdn.docchula.com/'];
     private originalEndpoint = ['https://flick-man-cdn.docchula.com/'];
-    private httpOptions = {
-        headers: new HttpHeaders({
-            Authorization: ''
-        })
-    };
 
     constructor() {
-        const authService = inject(AuthService);
-
         // remoteConfig: RemoteConfig
         /* if (environment.production) {
             // Get endpoint config
@@ -34,12 +28,6 @@ export class ManService {
                 this.originalEndpoint = w;
             });
         } */
-        // Get authentication data
-        authService.idToken.subscribe(idToken => this.setIdToken(idToken));
-    }
-
-    setIdToken(idToken: string) {
-        this.httpOptions.headers = this.httpOptions.headers.set('Authorization', 'Bearer ' + idToken);
     }
 
     getVideoList(): Observable<CourseListResponse> {
@@ -113,15 +101,8 @@ export class ManService {
             }`,
             variables: {id: videoId},
         };
-        if (this.httpOptions.headers.get('Authorization').length < 30) {
-            console.error('ManService ID token is not set.');
-            return of(null);
-        }
-        return this.http.post<{ data: { video: LectureDocInfo | null } }>(
-            this.getEndpointLocation() + 'graphql',
-            body,
-            this.httpOptions
-        ).pipe(map(response => response?.data?.video ?? null));
+        return this.post<{ data: { video: LectureDocInfo | null } }>('graphql', body)
+            .pipe(map(response => response?.data?.video ?? null));
     }
 
     getPlayRecord(year: string, course: string, courseId: string | null, stopPolling: Observable<boolean>): Observable<{
@@ -176,25 +157,11 @@ export class ManService {
     }
 
     get<T>(path: string, options?: object): Observable<T> {
-        if (this.httpOptions.headers.get('Authorization').length < 30) {
-            console.error('ManService ID token is not set.');
-        } else if (!this.getEndpointLocation()) {
-            console.error('ManService endpoint is not set.');
-        } else {
-            return this.http.get<T>(this.getEndpointLocation() + path, {...this.httpOptions, ...options});
-        }
-        return of(null);
+        return this.withIdToken(headers => this.http.get<T>(this.getEndpointLocation() + path, {headers, ...options}));
     }
 
     post<T>(path: string, body: object): Observable<T> {
-        if (this.httpOptions.headers.get('Authorization').length < 30) {
-            console.error('ManService ID token is not set.');
-        } else if (!this.getEndpointLocation()) {
-            console.error('ManService endpoint is not set.');
-        } else {
-            return this.http.post<T>(this.getEndpointLocation() + path, body, this.httpOptions);
-        }
-        return of(null);
+        return this.withIdToken(headers => this.http.post<T>(this.getEndpointLocation() + path, body, {headers}));
     }
 
     searchVideos(query: string): Observable<SearchVideoResult[]> {
@@ -218,15 +185,33 @@ export class ManService {
             }`,
             variables: {where: {OR: or}},
         };
-        if (this.httpOptions.headers.get('Authorization').length < 30) {
-            console.error('ManService ID token is not set.');
-            return of([]);
-        }
-        return this.http.post<{ data: { videos: { data: SearchVideoResult[] } } }>(
-            this.getEndpointLocation() + 'graphql',
-            body,
-            this.httpOptions
-        ).pipe(map(response => response?.data?.videos?.data ?? []));
+        return this.post<{ data: { videos: { data: SearchVideoResult[] } } }>('graphql', body)
+            .pipe(map(response => response?.data?.videos?.data ?? []));
+    }
+
+    /**
+     * Sends `request` with a freshly fetched ID token, or emits null without a request when signed out.
+     * On a 401, refreshes the token and retries once, in case the server rejects a token that Firebase
+     * still considers valid (e.g. after the device clock was corrected).
+     */
+    private withIdToken<T>(request: (headers: HttpHeaders) => Observable<T>): Observable<T> {
+        const send = (forceRefresh: boolean) => this.authService.getIdToken(forceRefresh).pipe(
+            switchMap(idToken => {
+                if (!idToken) {
+                    console.error('ManService ID token is not set.');
+                } else if (!this.getEndpointLocation()) {
+                    console.error('ManService endpoint is not set.');
+                } else {
+                    return request(new HttpHeaders({Authorization: 'Bearer ' + idToken}));
+                }
+                return of(null);
+            }),
+        );
+        return send(false).pipe(
+            catchError(error => error instanceof HttpErrorResponse && error.status === 401
+                ? send(true)
+                : throwError(() => error)),
+        );
     }
 
     /*updateCurrentStudent(requestBody) {
@@ -255,7 +240,6 @@ export class ManService {
 export const ManServiceStub: Partial<ManService> = {
     getVideosInCourse: () => of({lectures: {}, key: '', category: '', name: ''}),
     getVideoList: () => of({years: {}, last_fetched_at: '', last_played: null}),
-    setIdToken: () => {},
 };
 
 export interface CourseMembers {

@@ -105,41 +105,38 @@ export class WelcomePage implements OnInit, OnDestroy {
     if (this.isAuthChecked) {
       return this.router.navigate(["/home"]);
     }
-    this.user.getIdToken().then((idToken) => {
-      this.manService.setIdToken(idToken);
-      this.manService
-        .checkAuthorization()
-        .toPromise()
-        .then(
-          (result) => {
-            if (result) {
-              this.isAuthChecked = true;
-              return this.router.navigate(["/home"]);
-            }
-          },
-          (reason: HttpErrorResponse) => {
-            if (reason instanceof ErrorEvent) {
-              this.alertError(
-                "Client Error",
-                "Please check your network connection."
-              );
-            } else if (reason.status === 401) {
-              this.alertError(
-                "Unregistered!",
-                "You are not allowed to access this website."
-              );
-            } else if ([500, 502, 503, 504].includes(reason.status)) {
-              this.alertError("Server Error", "Please contact administrator.");
-            } else {
-              this.manService.changeEndpoint();
-              this.alertError(
-                "Connection Error",
-                "Unable to reach server. You may try again."
-              );
-            }
+    this.manService
+      .checkAuthorization()
+      .toPromise()
+      .then(
+        (result) => {
+          if (result) {
+            this.isAuthChecked = true;
+            return this.router.navigate(["/home"]);
           }
-        );
-    });
+        },
+        (reason: HttpErrorResponse) => {
+          if (reason instanceof ErrorEvent) {
+            this.alertError(
+              "Client Error",
+              "Please check your network connection."
+            );
+          } else if (reason.status === 401) {
+            this.alertError(
+              "Unregistered!",
+              "You are not allowed to access this website."
+            );
+          } else if ([500, 502, 503, 504].includes(reason.status)) {
+            this.alertError("Server Error", "Please contact administrator.");
+          } else {
+            this.manService.changeEndpoint();
+            this.alertError(
+              "Connection Error",
+              "Unable to reach server. You may try again."
+            );
+          }
+        }
+      );
     return new Promise<void>((resolve) => resolve());
   }
 

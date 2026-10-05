@@ -1,5 +1,5 @@
 import {TestBed, fakeAsync, tick} from '@angular/core/testing';
-import {provideHttpClient} from '@angular/common/http';
+import {HttpErrorResponse, provideHttpClient} from '@angular/common/http';
 import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
 import {of, Subject} from 'rxjs';
 import {ManService} from './man.service';
@@ -10,12 +10,18 @@ describe('ManService', () => {
     let service: ManService;
     let httpMock: HttpTestingController;
     let playTrackerUpdate: unknown = null;
+    // The token the stubbed AuthService hands out, read when each request is made
+    let idToken: string | null = null;
+    let getIdToken: jasmine.Spy;
 
     const APP_ENDPOINT = 'https://flick-man-app.docchula.com/';
     const VALID_TOKEN = 'x'.repeat(40);
+    const REFRESHED_TOKEN = 'y'.repeat(40);
 
     beforeEach(() => {
         playTrackerUpdate = null;
+        idToken = null;
+        getIdToken = jasmine.createSpy('getIdToken').and.callFake(() => of(idToken));
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -23,7 +29,7 @@ describe('ManService', () => {
                 // AuthService can't be constructed without real Firebase (see plan);
                 // PlayTrackerService opens a real websocket in its constructor.
                 // Both are stubbed so ManService's own logic can be tested in isolation.
-                {provide: AuthService, useValue: {idToken: of(null)}},
+                {provide: AuthService, useValue: {getIdToken}},
                 // Reads playTrackerUpdate at call time so individual tests can vary
                 // it without needing to reconfigure the TestBed module.
                 {provide: PlayTrackerService, useValue: {retrieve: () => of(playTrackerUpdate)}},
@@ -38,7 +44,7 @@ describe('ManService', () => {
     });
 
     describe('the Authorization gate', () => {
-        it('issues no request and returns null when no ID token has been set', done => {
+        it('issues no request and returns null when signed out', done => {
             service.get('v1/video').subscribe(result => {
                 expect(result).toBeNull();
                 done();
@@ -46,8 +52,8 @@ describe('ManService', () => {
             httpMock.expectNone(() => true);
         });
 
-        it('issues the request once a sufficiently long token is set', () => {
-            service.setIdToken(VALID_TOKEN);
+        it('sends the ID token as a bearer token', () => {
+            idToken = VALID_TOKEN;
             service.get('v1/video').subscribe();
 
             const req = httpMock.expectOne(APP_ENDPOINT + 'v1/video');
@@ -56,8 +62,63 @@ describe('ManService', () => {
         });
     });
 
+    // docchula/FlickMan#6: a token kept since sign-in was rejected once it had expired
+    describe('ID token freshness', () => {
+        beforeEach(() => idToken = VALID_TOKEN);
+
+        it('fetches the ID token for every request, so a refreshed token is used', () => {
+            service.get('v1/video').subscribe();
+            httpMock.expectOne(APP_ENDPOINT + 'v1/video').flush({});
+
+            idToken = REFRESHED_TOKEN;
+            service.post('v1/play_records', {}).subscribe();
+
+            const req = httpMock.expectOne(APP_ENDPOINT + 'v1/play_records');
+            expect(req.request.headers.get('Authorization')).toBe('Bearer ' + REFRESHED_TOKEN);
+            req.flush({});
+            expect(getIdToken).toHaveBeenCalledTimes(2);
+            expect(getIdToken).not.toHaveBeenCalledWith(true);
+        });
+
+        it('forces a token refresh and retries once after a 401', () => {
+            let result: unknown;
+            service.get('v1/video').subscribe(r => result = r);
+
+            idToken = REFRESHED_TOKEN;
+            httpMock.expectOne(APP_ENDPOINT + 'v1/video').flush(null, {status: 401, statusText: 'Unauthorized'});
+
+            expect(getIdToken).toHaveBeenCalledWith(true);
+            const retry = httpMock.expectOne(APP_ENDPOINT + 'v1/video');
+            expect(retry.request.headers.get('Authorization')).toBe('Bearer ' + REFRESHED_TOKEN);
+            retry.flush({status: 'success'});
+            expect(result).toEqual({status: 'success'});
+        });
+
+        it('fails with the 401 when the retry is rejected as well', () => {
+            let error: HttpErrorResponse;
+            service.post('v1/play_records', {}).subscribe({error: e => error = e});
+
+            httpMock.expectOne(APP_ENDPOINT + 'v1/play_records').flush(null, {status: 401, statusText: 'Unauthorized'});
+            httpMock.expectOne(APP_ENDPOINT + 'v1/play_records').flush(null, {status: 401, statusText: 'Unauthorized'});
+
+            expect(error.status).toBe(401);
+            httpMock.expectNone(APP_ENDPOINT + 'v1/play_records');
+        });
+
+        it('does not retry other errors', () => {
+            let error: HttpErrorResponse;
+            service.get('v1/video').subscribe({error: e => error = e});
+
+            httpMock.expectOne(APP_ENDPOINT + 'v1/video').flush(null, {status: 500, statusText: 'Server Error'});
+
+            expect(error.status).toBe(500);
+            expect(getIdToken).toHaveBeenCalledTimes(1);
+            httpMock.expectNone(APP_ENDPOINT + 'v1/video');
+        });
+    });
+
     describe('getVideoList', () => {
-        beforeEach(() => service.setIdToken(VALID_TOKEN));
+        beforeEach(() => idToken = VALID_TOKEN);
 
         it('returns the same Observable instance and dedupes the underlying HTTP request across subscribers', () => {
             const first = service.getVideoList();
@@ -87,7 +148,7 @@ describe('ManService', () => {
     });
 
     describe('getVideosInCourse', () => {
-        beforeEach(() => service.setIdToken(VALID_TOKEN));
+        beforeEach(() => idToken = VALID_TOKEN);
 
         it('requests by courseId when provided', () => {
             service.getVideosInCourse(null, null, '42').subscribe();
@@ -144,7 +205,7 @@ describe('ManService', () => {
     });
 
     describe('searchVideos', () => {
-        beforeEach(() => service.setIdToken(VALID_TOKEN));
+        beforeEach(() => idToken = VALID_TOKEN);
 
         it('returns [] without a request for queries under 2 characters', done => {
             service.searchVideos('a').subscribe(result => {
@@ -177,7 +238,7 @@ describe('ManService', () => {
     });
 
     describe('checkAuthorization', () => {
-        beforeEach(() => service.setIdToken(VALID_TOKEN));
+        beforeEach(() => idToken = VALID_TOKEN);
 
         it('maps a response with a success field to true', done => {
             service.checkAuthorization().subscribe(result => {
@@ -198,7 +259,7 @@ describe('ManService', () => {
 
     describe('changeEndpoint', () => {
         it('rotates to the next endpoint', () => {
-            service.setIdToken(VALID_TOKEN);
+            idToken = VALID_TOKEN;
             service.changeEndpoint();
             service.get('v1/video').subscribe();
 
@@ -207,7 +268,7 @@ describe('ManService', () => {
     });
 
     describe('getPlayRecord merge rule', () => {
-        beforeEach(() => service.setIdToken(VALID_TOKEN));
+        beforeEach(() => idToken = VALID_TOKEN);
 
         it('lets a play-tracker update win when the record is missing', fakeAsync(() => {
             playTrackerUpdate = {video_id: 99, end_time: 50, played_at: '2024-01-02'};
