@@ -5,7 +5,7 @@ import {Router, RouterLink} from '@angular/router';
 import {SettingsMenuComponent} from '../shared/settings-menu.component';
 import {PomodoroTimerComponent} from '../shared/pomodoro-timer.component';
 import {AuthService} from '../auth.service';
-import {colorByFolderName} from '../../helpers';
+import {colorByFolderName, contrastByFolderName} from '../../helpers';
 import {addIcons} from "ionicons";
 import {logOutOutline, searchOutline} from "ionicons/icons";
 import {debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
@@ -32,6 +32,7 @@ import {
     IonToolbar,
 } from '@ionic/angular/standalone';
 import {AsyncPipe, NgStyle} from '@angular/common';
+import {ThemeMenuComponent} from '../shared/theme-menu.component';
 import {Analytics, logEvent} from '@angular/fire/analytics';
 import {ConsentService} from '../consent.service';
 
@@ -49,6 +50,7 @@ export interface EnrichedSearchResult extends SearchVideoResult {
         SettingsMenuComponent, PomodoroTimerComponent,
         IonContent, IonGrid, IonRow, IonCol, IonCard, RouterLink, NgStyle,
         IonCardHeader, IonCardTitle, AsyncPipe, IonCardContent, IonItem,
+        ThemeMenuComponent,
         IonLabel, IonText, IonSpinner, IonSearchbar, IonList,
     ]
 })
@@ -130,6 +132,7 @@ export class HomePage implements OnInit {
     }
 
     protected readonly colorByFolderName = colorByFolderName;
+    protected readonly contrastByFolderName = contrastByFolderName;
     protected readonly Object = Object;
 
     goToLastVideo(lastVideo: Lecture) {

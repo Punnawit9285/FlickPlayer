@@ -4,7 +4,7 @@ import {EMPTY, Observable, of, Subject} from 'rxjs';
 import {debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
 import {SettingsMenuComponent} from '../../shared/settings-menu.component';
 import {ManService, SearchVideoResult} from '../../man.service';
-import {colorByFolderName} from '../../../helpers';
+import {colorByFolderName, contrastByFolderName} from '../../../helpers';
 import {
     IonBackButton,
     IonButtons,
@@ -22,6 +22,7 @@ import {
 import {AsyncPipe, NgStyle} from '@angular/common';
 import {Analytics, logEvent} from '@angular/fire/analytics';
 import {ConsentService} from '../../consent.service';
+import {ThemeMenuComponent} from '../../shared/theme-menu.component';
 
 export interface EnrichedSearchResult extends SearchVideoResult {
     courseName?: string;
@@ -36,6 +37,7 @@ export interface EnrichedSearchResult extends SearchVideoResult {
         IonHeader, IonToolbar, RouterLink, IonBackButton, IonTitle, NgStyle,
         IonButtons,
         IonContent, IonList, IonListHeader, IonItem, IonLabel, AsyncPipe,
+        ThemeMenuComponent,
         IonSearchbar, IonSpinner,
         SettingsMenuComponent,
     ]
@@ -133,6 +135,7 @@ export class ListPage implements OnInit {
     }
 
     protected readonly colorByFolderName = colorByFolderName;
+    protected readonly contrastByFolderName = contrastByFolderName;
 
     private groupByAcademicYear(courses: { name: string, is_remote: boolean, id: number, link: string[] }[]) {
         const groups = new Map<string, typeof courses>();
