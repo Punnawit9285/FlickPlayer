@@ -46,6 +46,7 @@ import {PomodoroTimerComponent} from '../../shared/pomodoro-timer.component';
 import {ThemeMenuComponent} from '../../shared/theme-menu.component';
 import {Analytics, logEvent} from '@angular/fire/analytics';
 import {ConsentService} from '../../consent.service';
+import {StudyStatsService} from '../../study-stats.service';
 
 // The video.js SeekBar handlers wrapped by CoursePage.requireDragToSeekOnTouch()
 interface SeekBarPointerHandlers {
@@ -99,6 +100,7 @@ export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
     private modalCtrl = inject(ModalController);
     private analytics = inject(Analytics);
     private consentService = inject(ConsentService);
+    private studyStats = inject(StudyStatsService);
 
     @ViewChild('videoPlayer') videoPlayerElement: ElementRef;
     videoPlayer: Player;
@@ -293,6 +295,7 @@ export class CoursePage implements OnInit, AfterViewInit, OnDestroy {
                         lastLog.updatedAt = currentTimestamp;
                         this.playLog[lastLogKey] = lastLog;
                     }
+                    this.studyStats.recordVideoProgress(this.currentVideo?.id ?? null);
                 }
 
                 // Push to server

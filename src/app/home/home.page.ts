@@ -35,6 +35,7 @@ import {AsyncPipe, NgStyle} from '@angular/common';
 import {ThemeMenuComponent} from '../shared/theme-menu.component';
 import {Analytics, logEvent} from '@angular/fire/analytics';
 import {ConsentService} from '../consent.service';
+import {StudyHeatmapComponent} from '../shared/study-heatmap.component';
 
 export interface EnrichedSearchResult extends SearchVideoResult {
     courseName?: string;
@@ -52,6 +53,7 @@ export interface EnrichedSearchResult extends SearchVideoResult {
         IonCardHeader, IonCardTitle, AsyncPipe, IonCardContent, IonItem,
         ThemeMenuComponent,
         IonLabel, IonText, IonSpinner, IonSearchbar, IonList,
+        StudyHeatmapComponent,
     ]
 })
 export class HomePage implements OnInit {
